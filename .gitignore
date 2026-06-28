@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.uv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Playwright / browsers auth
+.auth/
+playwright-report/
+
+# Test + AI-QA outputs
+/test-output/
+/test-output/ai/
+.aiqa-cache/
+allure-results/
+allure-report/
+
+# Generated gRPC stubs (regenerate with `poe proto-gen`)
+src/aiqa_framework/grpc/generated/*_pb2.py
+src/aiqa_framework/grpc/generated/*_pb2.pyi
+src/aiqa_framework/grpc/generated/*_pb2_grpc.py
+
+# Real env files — only the *.example templates are committed.
+environments/.env.*
+!environments/.env.example
+!environments/.env.*.example
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

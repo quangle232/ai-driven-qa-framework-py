@@ -1,0 +1,59 @@
+// Sample casino live-game gRPC contract (port of the TS framework).
+//
+// Demonstrates ALL FOUR RPC types a live-dealer / casino backend uses:
+//   - unary               GetBalance, PlaceBet
+//   - server-streaming    StreamGameState
+//   - client-streaming    SendActions
+//   - bidirectional       PlayLive
+//
+// Generate Python stubs with `poe proto-gen`. Replace with your real protos.
+syntax = "proto3";
+
+package casino.game.v1;
+
+service GameService {
+  rpc GetBalance(GetBalanceRequest) returns (BalanceResponse);
+  rpc PlaceBet(PlaceBetRequest) returns (PlaceBetResponse);
+  rpc StreamGameState(StreamGameStateRequest) returns (stream GameStateEvent);
+  rpc SendActions(stream PlayerAction) returns (RoundSummary);
+  rpc PlayLive(stream PlayerAction) returns (stream GameStateEvent);
+}
+
+message GetBalanceRequest { string player_id = 1; }
+message BalanceResponse {
+  string player_id = 1;
+  int64 balance = 2;
+  string currency = 3;
+}
+
+message PlaceBetRequest {
+  string player_id = 1;
+  string round_id = 2;
+  int64 amount = 3;
+  string market = 4;
+}
+message PlaceBetResponse {
+  string bet_id = 1;
+  bool accepted = 2;
+  int64 balance_after = 3;
+}
+
+message StreamGameStateRequest { string table_id = 1; }
+message GameStateEvent {
+  string table_id = 1;
+  string phase = 2;   // betting | dealing | result | ack
+  int64 sequence = 3;
+  string payload = 4;
+}
+
+message PlayerAction {
+  string player_id = 1;
+  string action = 2;
+  int64 amount = 3;
+}
+message RoundSummary {
+  string round_id = 1;
+  int64 total_staked = 2;
+  int64 net_result = 3;
+  int32 action_count = 4;
+}

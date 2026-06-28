@@ -1,0 +1,67 @@
+# SAMPLE — GitHub Actions regression (uv + pytest). Copy to .github/workflows/.
+# Secrets: AUTH_URL, APP_URL, APP_USER, APP_PASS, (optional) JIRA_*, ANTHROPIC_API_KEY.
+name: Regression (sample)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [dev, test, prod]
+        default: test
+      markers:
+        type: string
+        default: "regression"
+      reruns:
+        type: string
+        default: "2"
+  # schedule: [{ cron: "0 18 * * *" }]   # uncomment after copying to enable nightly
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      CI_PROVIDER: github-actions
+      test_env: ${{ github.event.inputs.environment || 'test' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --extra dev
+      - run: uv run playwright install --with-deps chromium
+      - run: uv run poe proto-gen
+      - name: Provision env file from secrets
+        run: |
+          mkdir -p environments
+          cat > "environments/.env.${test_env}" <<EOF
+          AUTH_URL=${{ secrets.AUTH_URL }}
+          APP_URL=${{ secrets.APP_URL }}
+          APP_USER=${{ secrets.APP_USER }}
+          APP_PASS=${{ secrets.APP_PASS }}
+          EOF
+      - name: Run pytest
+        env:
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+          JIRA_PROJECT: ${{ secrets.JIRA_PROJECT }}
+        run: uv run pytest -m "${{ github.event.inputs.markers || 'regression' }}" --reruns "${{ github.event.inputs.reruns || '2' }}"
+      - name: AI QA Agent report
+        if: always()
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run aiqa report-all
+      - name: Publish summary
+        if: always()
+        run: '[ -f test-output/ai/ci-summary.md ] && cat test-output/ai/ci-summary.md >> "$GITHUB_STEP_SUMMARY" || true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-output-${{ github.run_id }}
+          path: test-output
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,88 @@
+openapi: 3.0.3
+info:
+  title: Sample API (contract for schemathesis / a spec-driven mock)
+  version: 1.0.0
+  description: >
+    Sample OpenAPI contract. Keep in sync with the pydantic models in
+    aiqa_framework/api/models.py for true contract testing (e.g. schemathesis
+    run against the FastAPI mock or a real service).
+servers:
+  - url: http://127.0.0.1:4010
+paths:
+  /auth/login:
+    post:
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/LoginResponse" } } } }
+        "401": { description: Unauthorized, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+  /users:
+    get:
+      operationId: listUsers
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/User" } }
+    post:
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateUserRequest" }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } }
+        "400": { description: Bad request, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+  /users/{id}:
+    get:
+      operationId: getUser
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } }
+        "404": { description: Not found, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+    delete:
+      operationId: deleteUser
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses:
+        "204": { description: No content }
+        "404": { description: Not found, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+components:
+  schemas:
+    User:
+      type: object
+      required: [id, username, email, createdAt]
+      properties:
+        id: { type: string }
+        username: { type: string }
+        email: { type: string, format: email }
+        createdAt: { type: string, format: date-time }
+    CreateUserRequest:
+      type: object
+      required: [username, email]
+      properties:
+        username: { type: string, minLength: 3 }
+        email: { type: string, format: email }
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+    LoginResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string }
+        user: { $ref: "#/components/schemas/User" }
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error: { type: string }
+        message: { type: string }

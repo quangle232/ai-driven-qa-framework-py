@@ -1,0 +1,44 @@
+# SAMPLE — GitHub Actions PR smoke gate. Copy to .github/workflows/.
+# Runs the @smoke green slice (excludes @bugs/native). No Jira on PRs.
+name: PR smoke (sample)
+
+on:
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-smoke-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      CI_PROVIDER: github-actions
+      test_env: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --extra dev
+      - run: uv run playwright install --with-deps chromium
+      - run: uv run poe proto-gen
+      - name: Provision env file from secrets
+        run: |
+          mkdir -p environments
+          cat > "environments/.env.test" <<EOF
+          AUTH_URL=${{ secrets.AUTH_URL }}
+          APP_URL=${{ secrets.APP_URL }}
+          APP_USER=${{ secrets.APP_USER }}
+          APP_PASS=${{ secrets.APP_PASS }}
+          EOF
+      - run: uv run pytest -m "smoke and not mobile_native and not bugs" --reruns 2
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: pr-smoke-report
+          path: test-output
+          if-no-files-found: ignore

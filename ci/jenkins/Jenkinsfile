@@ -1,0 +1,50 @@
+// SAMPLE — Jenkins declarative pipeline (uv + pytest).
+// Point a Pipeline job at this file (Pipeline script from SCM).
+// Credentials: store JIRA token etc. in Jenkins; never hard-code.
+pipeline {
+  agent any
+
+  parameters {
+    choice(name: 'ENVIRONMENT', choices: ['dev', 'test', 'prod'], description: 'loads environments/.env.<env>')
+    string(name: 'MARKERS', defaultValue: 'regression', trim: true, description: 'pytest -m expression')
+    string(name: 'RERUNS', defaultValue: '2', trim: true, description: 'pytest-rerunfailures count')
+  }
+
+  environment {
+    CI = 'true'
+    CI_PROVIDER = 'jenkins'
+    test_env = "${params.ENVIRONMENT}"
+  }
+
+  stages {
+    stage('Install') {
+      steps {
+        sh '''
+          pip install -q uv
+          uv sync --extra dev
+          uv run playwright install --with-deps chromium
+          uv run poe proto-gen
+        '''
+      }
+    }
+    stage('Test') {
+      steps {
+        // Inject Jira creds from the Jenkins credential store here if desired.
+        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+          sh 'uv run pytest -m "${MARKERS}" --reruns "${RERUNS}"'
+        }
+      }
+    }
+    stage('Report') {
+      steps {
+        sh 'uv run aiqa report-all || true'
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'test-output/**/*', allowEmptyArchive: true
+    }
+  }
+}
