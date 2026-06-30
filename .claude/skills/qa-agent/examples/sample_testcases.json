@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "aiqa.qa.excel.v1",
+  "meta": {
+    "feature": "Login",
+    "userStoryKey": "PROJ-1",
+    "sourceNoteTitle": "Login with password",
+    "figmaDesignLink": "https://figma.example.com/file/abc123",
+    "prototypeLink": "https://prototype.example.com/login",
+    "generatedAt": "2026-06-30T00:00:00Z",
+    "approvalRequired": true,
+    "approvalStatus": "draft"
+  },
+  "testCases": [
+    {
+      "tcId": "TC-LOGIN-001",
+      "feature": "Login",
+      "subFeature": "Password login",
+      "summaryPrecondition": "User is on the login page with a valid account",
+      "testDescription": "Verify user can log in with valid email and password",
+      "stepDetails": [
+        { "step": 1, "detail": "Open the login page", "element": "[data-test-id=\"login\"]" },
+        { "step": 2, "detail": "Enter a valid email and password", "element": "[data-test-id=\"email\"]" },
+        { "step": 3, "detail": "Click submit", "element": "button[type=\"submit\"]" }
+      ],
+      "priority": "",
+      "priorityReason": "",
+      "duplicateStatus": "",
+      "duplicateOf": "",
+      "duplicateReason": "",
+      "acIds": ["AC1"],
+      "automatable": true,
+      "surface": "ui",
+      "specFile": "",
+      "testResult": "",
+      "bugId": "",
+      "notes": ""
+    },
+    {
+      "tcId": "TC-LOGIN-002",
+      "feature": "Login",
+      "subFeature": "Password login",
+      "summaryPrecondition": "User is on the login page",
+      "testDescription": "Verify a validation message is shown when the password is empty",
+      "stepDetails": [
+        { "step": 1, "detail": "Leave the password empty and submit", "element": "button[type=\"submit\"]" }
+      ],
+      "priority": "",
+      "priorityReason": "",
+      "duplicateStatus": "",
+      "duplicateOf": "",
+      "duplicateReason": "",
+      "acIds": ["AC2"],
+      "automatable": true,
+      "surface": "ui",
+      "specFile": "",
+      "testResult": "",
+      "bugId": "",
+      "notes": ""
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": []
+}

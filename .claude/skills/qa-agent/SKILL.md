@@ -1,194 +1,111 @@
 ---
 name: qa-agent
-description: AI-driven QA test-generation agent for the Python (Playwright + pytest) AI-Driven QA Framework. Use when given a Jira story key or pasted acceptance criteria to generate manual + automation test cases and pytest code following this framework's conventions (POM + ActionKeyword, Service-Object API, typed gRPC client, Appium/mobile-web), then run and report. Degrades gracefully when MCPs are missing.
+description: AI-driven QA agent for the Python (Playwright + pytest) AI-Driven QA Framework. Use when given a Jira story key, pasted acceptance criteria, or an issue note to design reviewable JSON-first test cases (testing strategy + auto priority scoring + duplicate detection), run a human approval loop, export approved cases to a Trustify-style Excel attached to the Jira story, then convert the approved cases into Playwright/pytest code (POM + ActionKeyword, Service-Object API, typed gRPC client, Appium/mobile-web), execute all, and report results back to the JSON and Jira. Degrades gracefully when MCPs are missing.
 ---
 
-# QA Agent — Python framework (Playwright + pytest)
+# QA Agent — Python framework (design → approve → automate → run → report)
 
 ## Role
-Senior QA Automation Agent inside the **Python** AI-Driven QA Framework. Given a
-Jira story you: fetch + parse it, gate on status, draft manual + automation
-cases, present a review table, generate pytest code for approved cases, run it,
-and report. You never regenerate code that already exists — check the tracking
-files first and reuse / re-run.
+You are a Senior QA Agent inside the **Python** AI-Driven QA Framework and the
+single entry point for the QA workflow. The skill is two halves joined at the
+**approved JSON**:
+1. **Design half** — analyse the story, author canonical JSON test cases, enrich
+   them, review them as a table, get human approval, export Excel, sync Jira.
+2. **Automation half** — turn the approved manual cases into Playwright/pytest,
+   execute all (new + related), and report results back into the JSON, Jira, and
+   `docs/ai/`.
+
+**JSON is always the source of truth.** The table and the generated code are
+always regenerated from the JSON.
 
 ## How to load this skill
-Read these reference files together, in order, before acting:
+Read and follow these together, in order:
 
-1. `./references/framework-conventions.md` — how generated Python MUST look
-2. `./references/test-case-template.md` — case fields, coverage + priority rules
-3. `./references/tracking-files.md` — the `docs/ai/` memory / test-case / navigation files
-4. `./references/mcp-usage.md` — Jira / Figma / Playwright MCP + the 4 aiqa servers + fallbacks
-5. `./references/jenkins-trigger.md` — running the tests on Jenkins CI by marker
-6. `./references/jira-sync.md` — status gate, label→marker composition, sub-tasks
+1. `./references/workflow.md` — **the main operating instruction (16 steps)**
+2. `./references/ac-parsing.md` — AC extraction contract
+3. `./references/testing-strategy.md` — coverage policy
+4. `./references/priority-scoring.md` — priority classification (P0/P1/P2)
+5. `./references/duplicate-detection.md` — duplicate / redundancy policy
+6. `./references/review-table-rendering.md` — preview table + Jira comment contract
+7. `./references/json-contract.md` — canonical JSON source-of-truth contract
+8. `./references/jira-sync.md` — Jira behaviour (Create Test Case / Execute Testing)
+9. `./references/python-export-runner.md` — Excel export usage
+10. `./references/fallbacks.md` — mandatory fallback behaviour
+11. `./references/framework-conventions.md` — how generated pytest MUST look
+12. `./references/test-case-template.md` — JSON → pytest mapping (automation half)
+13. `./references/tracking-files.md` — `docs/ai/` note context + artifacts
+14. `./references/mcp-usage.md` — Jira / Figma / Playwright + the 4 aiqa servers
 
-Also load the live code (source of truth for generated code):
-`src/aiqa_framework/core/action_keyword.py`, `config/tags.py`, `pages/`, `api/`,
-`grpc/`, `mobile/`, `tests/`. Prefer calling the `framework-context` MCP first.
+Scripts:
+- `./scripts/json_quality_checks.py` — enrich JSON with priority + duplicate flags
+  (STEP 7) BEFORE presenting / syncing the table.
+- `./scripts/export_json_to_trustify_excel.py` — Excel export, AFTER approval only.
+- `./scripts/find_related_tests.py` / `./scripts/trigger_jenkins.py` — related-test
+  discovery + CI execution in the automation half.
 
-`./examples/` is formatting guidance — a generated Page Object
-(`sample_page_object.py`), a generated spec (`sample_spec.py`), and the three
-tracking files (`memory.md`, `navigation.md`, `test-case.md`).
-`./scripts/find_related_tests.py` detects existing tests by marker (== Jira
-label); `./scripts/trigger_jenkins.py` triggers the Jenkins job by marker.
+Examples (formatting guidance only): `issue-note-example.md`,
+`changeset-example.md`, `sample_testcases.json`, `sample_page_object.py`,
+`sample_spec.py`, and the `docs/ai/` trackers.
 
 ## Invocation contract
-If the user gives a `user_story_key` (e.g. `EAST-123`), run the full workflow
-without asking them to restate the steps. If they paste raw acceptance criteria,
-skip the Jira fetch and the status gate, and start at Phase 3.
+If the user provides a `user_story_key` (e.g. `EAST-123`), run the full workflow
+without asking them to restate the steps. If they paste raw AC or an issue note
+instead, skip the Jira fetch and use note context. The automation half (STEP
+14–16) runs **after** the exact approval phrase `I approve`.
 
----
-
-## Workflow — phases
-
-### Phase 0 — Load context
-- Read `docs/ai/memory.md`, `docs/ai/test-case.md`, `docs/ai/navigation.md`. If a
-  file is missing, create it from the matching file in `./examples/`.
-- Read the framework so generated code matches what exists today (see "How to
-  load"). Call the `framework-context` MCP for the conventions + `TAGS` map.
-- Goal: know which flows, page objects / services / screens and tests already
-  exist so later phases reuse them instead of regenerating.
-
-### Phase 1 — Fetch story + parse + status gate
-- Use the Jira MCP to fetch the story by `user_story_key`. Extract title,
-  description, acceptance criteria, **labels**, **status**, and any Figma link.
-- Normalise AC into `AC1`, `AC2`, …. Do not invent AC; record open questions.
-- **Compose the marker from labels** (see `jira-sync.md`): label `foo-bar` →
-  marker `foo_bar`; one label → `foo_bar`; many → `"a or b"`.
-- **STATUS GATE** (see `jira-sync.md`):
-  - status normalises to **`READY FOR QA`** → full workflow (all phases).
-  - else → **draft-only**: skip Phases 2 / 5 / 6; generate drafts (Phase 3) +
-    review table (Phase 4), then stop. Code is not deployed, so automation
-    cannot run meaningfully.
-- Apply every fallback in `mcp-usage.md`. Never hard-fail mid-flow.
-
-### Phase 2 — Trigger Jenkins for related existing tests *(full mode only)*
-Do this early so CI runs the related tests in parallel while you generate new ones.
-- `python3 .claude/skills/qa-agent/scripts/find_related_tests.py <marker>` to
-  confirm at least one existing test matches.
-- `python3 .claude/skills/qa-agent/scripts/trigger_jenkins.py <marker> --no-wait`
-  — capture the build URL, hand control back. Record it for Phase 7 (sub-task 1).
-
-### Phase 3 — Generate test case drafts
-- From the AC (+ Figma) generate NEW manual + automation cases using
-  `test-case-template.md` (fields, coverage rules, priority rules).
-- Steps must be clear and auto-friendly — one action per step, explicit data and
-  the element acted on.
-- Cross-check `docs/ai/test-case.md`: reuse an equivalent existing case; mark each
-  case new or existing. Choose the surface (UI / API / gRPC / mobile) per case.
-- Also list the related existing auto cases the Phase 2 build is running.
-
-### Phase 4 — Human review (TABLE only)
-- Present ONE markdown table of the draft cases using the columns in
-  `test-case-template.md`. Above it, list the related existing tests the Phase 2
-  build is running.
-- Wait for the user. On a revision request: update, redraw, ask again. Only on
-  **explicit approval** is the work final. No analytics tables — just the case
-  table and the related-tests list.
-
-### Phase 5 — Code generation *(full mode only, after approval)*
-For each automatable case not already covered:
-- Use the Playwright MCP to navigate the live app and read the real DOM — true
-  selectors, routes, navigation. Prefer `data-zcqa → data-test-id → data-id →
-  data-title`. Do not invent selectors.
-- Generate code per `framework-conventions.md`, by surface:
-  - **UI** → Page Object in `pages/<name>_page.py` (extends `BasePage`, selectors
-    as class attrs, all interaction via `self.keyword.*`); spec in
-    `tests/ui/test_<feature>.py`.
-  - **API** → service in `api/services/<name>_service.py` wrapping `ApiClient`;
-    pydantic request/response models; spec in `tests/api/`.
-  - **gRPC** → use `grpc/client.py`; assert `grpc.StatusCode.*`; spec in `tests/grpc/`.
-  - **Mobile** → Screen Object in `mobile/screens/` + `MobileActionKeyword`; spec
-    in `tests/mobile/` (native, skip-gated) or reuse the web POM in `tests/mobile_web/`.
-- New shared keywords go INTO `ActionKeyword` (or the surface's keyword layer) —
-  never call the transport directly in a spec.
-- Decorate: `@tags(TAGS.<SURFACE>, TAGS.REGRESSION, TAGS.P0/1/2)` + `@jira("KEY")`.
-  If the feature marker is missing from `config/tags.py`, that file and
-  `pyproject.toml` are **patch-guarded** — ask the user to add it (see
-  `jira-sync.md`); reuse the closest existing marker meanwhile.
-- Keep test data in `testdata/` modules. Reuse existing pages / services / screens.
-- Validate every generated file with `uv run aiqa guard --files <paths>` before
-  finalising — it rejects writes to patch-guarded paths (`.auth/`,
-  `environments/`, `conftest.py`, `pyproject.toml`, `core/auth.py`, `jira/`,
-  `config/`, `ci/`, `grpc/proto/`, `api/contracts/`, `.github/`), hardcoded
-  secrets, `time.sleep`, `pytest.mark.skip`, and raw `playwright.sync_api`
-  imports in specs.
-
-### Phase 6 — Run new auto cases *(full mode only)*
-- Local (fast): `uv run pytest -m "<marker>"` (e.g. `-m api`). Surface shortcuts:
-  `uv run poe test-api | test-grpc | test-mobile-web | test-mobile-native`.
-- Or on Jenkins: `python3 .claude/skills/qa-agent/scripts/trigger_jenkins.py <marker> --no-wait`.
-- Check the Phase 2 build: `... trigger_jenkins.py --status=<build-url>` (one-shot,
-  no polling loop, so a long build does not block).
-- Report: `uv run aiqa report-all` → `test-output/ai/`.
-
-### Phase 7 — Update tracking + create 3 Jira sub-tasks
-Update `docs/ai/` first (memory.md, test-case.md, navigation.md). Then create
-three sub-tasks on the story via the Jira MCP per `jira-sync.md`, each set to
-**Done** once filled:
-- **Subtask 1 — Execute related test cases** — the Phase 2 build's report link +
-  run summary.
-- **Subtask 2 — Add new automation cases** — new auto cases (TC ID + title + spec
-  path) and the Phase 6 result.
-- **Subtask 3 — Add new Manual cases** — the manual-only cases (Automatable = N).
-
-In **draft-only mode** only Subtask 3 is created, status **Open**.
-
----
+## Execution rule
+- Treat `workflow.md` as the main operating instruction (STEP 0–16).
+- `ac-parsing.md` = AC contract · `testing-strategy.md` = coverage ·
+  `priority-scoring.md` = priority · `duplicate-detection.md` = dedup ·
+  `review-table-rendering.md` = table/sync rendering · `json-contract.md` = JSON
+  source of truth · `jira-sync.md` = Jira behaviour · `fallbacks.md` = mandatory
+  fallbacks.
+- Run `json_quality_checks.py` to enrich the JSON before presenting/syncing the table.
+- Use the Excel export only after approval.
+- For the automation half follow `framework-conventions.md` + `test-case-template.md`;
+  validate every generated file with `uv run aiqa guard --files <paths>`.
+- Use examples as formatting guidance only.
 
 ## Hard rules
-- **Status gate first.** No code-gen / Jenkins for new auto cases unless `READY FOR QA`.
-- **Never hard-fail mid-flow.** Every MCP has a fallback in `mcp-usage.md`.
-- **Human review is mandatory.** Never mark tests final without explicit approval;
-  never run a destructive flow without confirmation.
-- **`marker == Jira label`** (kebab→snake). Links Jira ↔ `pytest -m` ↔ the Jenkins
-  `MARKERS` param.
-- **One keyword layer per surface** — UI `core/action_keyword.py`, API
-  `api/client.py`, gRPC `grpc/client.py`, mobile `mobile/action_keyword.py`. Specs
-  call Page Objects / services / screens, never the transport directly.
-- **Validate API with pydantic; assert gRPC status codes.** `@bugs` = expected to
-  fail (green slice `-m "not bugs"`); native-mobile is skip-gated.
-- **Respect the patch guard.** Validate generated files with `uv run aiqa guard`;
-  never edit a patch-guarded path — surface it to the user instead.
-- **Trigger the related-tests build EARLY** (Phase 2), check it with `--status` later.
-- **One review table** in Phase 4 — nothing else.
-- **Reuse over regenerate.** Check the tracking files first.
-- All code comments in English. Update `docs/ai/` after every generation + run.
+- **Approval loop is mandatory.** No Excel export and no code generation before the
+  exact phrase `I approve`. Never bypass it.
+- **JSON is the source of truth.** All edits update JSON first; table + code are
+  regenerated from it.
+- **One primary review table** — no derived / summary / analytics /
+  priority-distribution / automation-candidate tables in the conversation or in any
+  synced content.
+- **Excel attaches to the parent Jira user story only** — never to `Create Test
+  Case` or `Execute Testing`.
+- **Persist JSON + Excel to `docs/ai/`** whenever generated, even if Jira is up.
+- **Never hard-fail** on Jira / Figma / Playwright / MCP errors — fall back and
+  continue (`fallbacks.md`).
+- **Respect the patch guard** in the automation half (`uv run aiqa guard`); never
+  write a patch-guarded path (`config/`, `pyproject.toml`, `conftest.py`, etc.) —
+  surface it to the user.
+- **`marker == Jira label`** (kebab→snake); JSON `priority` `P0/P1/P2` → marker
+  `p0/p1/p2`.
+- All comments in English; update `docs/ai/` after every enrichment, edit, and run.
 
 ## Conflict order
 1. explicit user instruction
-2. `framework-conventions.md`
-3. this `SKILL.md` workflow
-4. `test-case-template.md`
-5. `tracking-files.md`
-6. `mcp-usage.md`
-7. `jenkins-trigger.md`
-8. `jira-sync.md`
+2. `workflow.md`
+3. `framework-conventions.md` (automation half)
+4. `ac-parsing.md`
+5. `testing-strategy.md`
+6. `priority-scoring.md`
+7. `duplicate-detection.md`
+8. `review-table-rendering.md`
+9. `json-contract.md`
+10. `test-case-template.md`
+11. `jira-sync.md`
+12. `tracking-files.md`
+13. `mcp-usage.md`
+14. `fallbacks.md`
 
 ## Reducing permission prompts
-This skill writes / edits files and runs `uv` / `pytest` / `python3` a lot. The
-user can pre-approve patterns ONCE in `.claude/settings.local.json` (project-
-local, not committed):
-```json
-{
-  "permissions": {
-    "allow": [
-      "Write",
-      "Edit",
-      "Bash(uv:*)",
-      "Bash(uv run:*)",
-      "Bash(python3:*)",
-      "Bash(python:*)",
-      "Bash(curl:*)",
-      "Bash(grep:*)",
-      "Bash(find:*)",
-      "Bash(git status*)",
-      "Bash(git log*)",
-      "Bash(git diff*)"
-    ]
-  }
-}
-```
-The `fewer-permission-prompts` skill can scan recent transcripts and propose a
-fitted allow-list. The qa-agent never auto-edits `settings.local.json` — the user
-controls their own permissions.
+This skill writes/edits files and runs `uv` / `pytest` / `python3`. The user can
+pre-approve patterns ONCE in `.claude/settings.local.json` (project-local, not
+committed): `Write`, `Edit`, `Bash(uv:*)`, `Bash(uv run:*)`, `Bash(python3:*)`,
+`Bash(python:*)`, `Bash(curl:*)`, `Bash(grep:*)`, `Bash(find:*)`,
+`Bash(git status*)`, `Bash(git log*)`, `Bash(git diff*)`. The qa-agent never
+auto-edits `settings.local.json` — the user controls their own permissions.

@@ -1,48 +1,40 @@
-# Tracking Files — docs/ai/
+# Tracking Files & Artifacts — docs/ai/
 
-Three files in `docs/ai/` carry context across qa-agent runs. **Read them in
-Phase 0; update them in Phase 7** (after every generation and every run).
-
-Purpose: never regenerate code or flows that already exist — reuse or re-run
-them instead. If a file is missing, create it from the matching file in
-`../examples/`.
-
----
+`docs/ai/` is this repo's note-context store (the Pilot-Space-note analogue). It
+carries context across runs and holds the JSON + Excel artifacts. Read it at STEP 0;
+update it throughout. If a tracking file is missing, create it from the matching
+file in `../examples/`.
 
 ## docs/ai/memory.md
 What has been done. Sections:
-- **## Generated work** — table: `Date | User story | Feature | Marker / Jira
-  label | Artifacts` (spec + page objects / services / screens + testdata files).
-- **## Decisions** — notable choices, conventions clarified, reuse decisions,
-  deliberate deviations.
-- **## Known gaps** — missing `data-test-id`s, brittle selectors, manual-only
-  areas, MCP steps that were skipped via fallback.
-- **## Run history** — table: `Date | Marker run | Result`.
-
-Use this to answer "does code for this flow already exist?" before generating.
+- **## Generated work** — `Date | User story | Feature | Marker / label | Artifacts`
+  (JSON path, Excel path, generated spec + page object / service / screen + testdata).
+- **## Decisions** — notable choices, reuse decisions, deviations.
+- **## Known gaps** — missing `data-test-id`s, brittle/unverified selectors,
+  manual-only areas, MCP steps skipped via fallback, patch-guarded markers awaiting
+  the user.
+- **## Run history** — `Date | Marker run | Result`.
 
 ## docs/ai/test-case.md
-The catalogue of ALL test cases (manual + automation), one row per case, using
-the row format and fields from `test-case-template.md`. Includes `Status` and
-`Spec File`, and a "Detailed steps" section below the table.
-
-Before generating a case, check here for an equivalent — reuse, do not duplicate.
+The human-readable catalogue of all cases (mirrors the review table columns), with
+`Status` and `Spec File`. Cross-check before generating to avoid duplicates.
 
 ## docs/ai/navigation.md
-The app navigation map: `Screen | Route / URL | How to reach it | Page Object`.
-Reused so a known screen is not re-explored with the Playwright MCP.
+`Screen | Route / URL | How to reach it | Page Object` — reused so a known screen
+is not re-explored with the Playwright MCP.
 
----
+## docs/ai/testcases/  (artifacts)
+- `TestCases_<feature>.json` — the canonical enriched/approved JSON (source of truth).
+- `TestCases_<feature>.xlsx` — the exported Excel (also in `test-output/qa/`).
+Keep these as the single source of truth; the `memory` MCP server
+(`uv run aiqa mcp-start memory`) exposes `docs/ai/` read-only.
 
-## Update rules
-- After **Phase 3** (cases generated): update `test-case.md`.
-- After **Phase 5** (code generated): update `memory.md` (Generated work,
-  Decisions, Known gaps) and `navigation.md` (any new screen/route).
-- After **Phase 6** (run): update each case `Status` in `test-case.md`
-  (`Passed` / `Failed`) and append a row to `memory.md` "Run history".
-- Append new rows; update an existing `Status` or row in place when it changes.
-- Convert relative dates to absolute (`YYYY-MM-DD`).
-- These files are committed alongside the generated tests.
-- The framework also exposes this folder read-only via the **`memory` MCP
-  server** (`uv run aiqa mcp-start memory`), so other tools can read the same
-  context — keep the files as the single source of truth.
+## Update rules (by step)
+- STEP 7.5 — persist the enriched JSON; add it to `memory.md` "Generated work".
+- STEP 8/11 — keep `test-case.md` in sync with the latest JSON/table.
+- STEP 13 — persist the Excel; record its path.
+- STEP 14 — record generated pages/specs in `memory.md`; new routes in `navigation.md`.
+- STEP 16 — write each case `Status` (Passed/Failed) in `test-case.md`, append a
+  `memory.md` "Run history" row, and record bug IDs.
+- Append new rows; update an existing row/status in place. Convert relative dates to
+  absolute (`YYYY-MM-DD`). Commit these alongside the generated tests.

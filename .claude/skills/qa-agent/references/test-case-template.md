@@ -1,91 +1,48 @@
-# Test Case Template & Coverage Rules
+# JSON → pytest mapping (STEP 14 bridge)
 
-## Test case fields
-Every generated test case (manual or automation) uses these fields:
+The JSON schema lives in `json-contract.md`, coverage in `testing-strategy.md`,
+priority in `priority-scoring.md`. This file is the **bridge**: how an approved
+JSON test case becomes runnable pytest code that follows `framework-conventions.md`.
 
-| Field | Notes |
-|-------|-------|
-| `id` | `TC-<FEATURE>-<NNN>`, e.g. `TC-SR-001` |
-| `title` | Concise scenario name |
-| `userStoryKey` | Jira key, e.g. `EAST-123` |
-| `type` | `Manual` or `Automation` |
-| `priority` | `p0` / `p1` / `p2` (pytest markers) |
-| `markers` | Feature marker(s); value == Jira label(s), kebab→snake (`service-request` → `service_request`) |
-| `preconditions` | State required before the steps run |
-| `steps` | Numbered, one action per step |
-| `expectedResult` | Observable expected outcome |
-| `automatable` | `Y` or `N` |
-| `status` | `Draft` / `Generated` / `Reviewed` / `Passed` / `Failed` |
-| `acIds` | Mapped AC ids, e.g. `["AC1"]` |
-| `specFile` | Path to the generated spec (Automation cases, once generated) |
+Generate code only for cases that are `automatable: true` and not flagged for
+removal (`duplicateStatus != "duplicate"`).
 
-## Markdown table form (used in the Phase 4 review)
-| ID | Title | Type | Pr. | Markers | Preconditions | Steps | Expected Result | Automatable | Status |
-|----|-------|------|-----|---------|---------------|-------|-----------------|-------------|--------|
+## Field mapping
+| JSON field | Becomes in pytest |
+|------------|-------------------|
+| `tcId` + `testDescription` | test function name + a one-line docstring (`def test_<slug>(...)`) |
+| `meta.userStoryKey` (or `acIds` source) | `@jira("<KEY>")` |
+| `priority` (`P0`/`P1`/`P2`) | priority marker `TAGS.P0` / `TAGS.P1` / `TAGS.P2` (case-folded) |
+| `surface` | folder + surface marker + keyword layer (table below) |
+| `feature` / Jira label | feature marker (`TAGS.<FEATURE>`), kebab→snake |
+| `summaryPrecondition` | fixtures / setup + an opening comment |
+| `stepDetails[].detail` | the spec body, one step per comment+call |
+| `stepDetails[].element` | the selector on the Page Object / Screen Object |
+| `testResult` / `bugId` | written BACK after STEP 15 run (not at generation) |
+| `specFile` | set to the generated path once written |
 
-- Multiline cell content uses `<br>`.
-- One test case per row.
-- This is also the row format of the `docs/ai/test-case.md` catalogue.
+## Surface → target
+| `surface` | Spec folder | Markers | Keyword layer / object |
+|-----------|-------------|---------|------------------------|
+| `ui` | `tests/ui/test_<feature>.py` | `TAGS.REGRESSION` (+ priority) | Page Object in `pages/`, `self.keyword.*` |
+| `api` | `tests/api/test_<feature>.py` | `TAGS.API` | service in `api/services/`, pydantic models |
+| `grpc` | `tests/grpc/test_<feature>.py` | `TAGS.GRPC` | `grpc/client.py`, assert `grpc.StatusCode.*` |
+| `mobile_web` | `tests/mobile_web/test_<feature>.py` | `TAGS.MOBILE_WEB` | reuse the web POM |
+| `mobile_native` | `tests/mobile/test_<feature>.py` | `TAGS.MOBILE, TAGS.MOBILE_NATIVE` | `mobile/screens/` + `MobileActionKeyword` (skip-gated) |
 
-## JSON form (machine-readable)
-```json
-{
-  "id": "TC-SR-001",
-  "title": "Log a service request with valid data",
-  "userStoryKey": "EAST-123",
-  "type": "Automation",
-  "priority": "p0",
-  "markers": ["service_request"],
-  "preconditions": "Logged in to the SUT",
-  "steps": [
-    "Open the service request form",
-    "Select request type and priority, enter description, pick a contact",
-    "Submit"
-  ],
-  "expectedResult": "A reference number is generated and the request is saved",
-  "automatable": "Y",
-  "status": "Generated",
-  "acIds": ["AC1"],
-  "specFile": "tests/ui/test_service_request.py"
-}
-```
+## Generated shape (see `../examples/`)
+- Page Object: `../examples/sample_page_object.py` — `extends BasePage`, selectors
+  (from JSON `element`) as class attrs, interaction only via `self.keyword.*`.
+- Spec: `../examples/sample_spec.py` — `@tags(...)` + `@jira(...)`, call the Page
+  Object (never `page.locator` in a spec), one comment+call per `stepDetails` step,
+  test data in a `testdata/` module.
 
-## Coverage rules (testing strategy)
-- Per AC: generate at least **1 happy-path** and **1 negative** case.
-- Add **edge / boundary**, **validation**, **security** and **data** cases where
-  they are meaningful for the feature — minimal but sufficient.
-- Ordering: happy path → UI sanity → validation → negative → edge / boundary →
-  exploratory / adhoc.
-- Map every case to at least one AC when possible.
-- Do not invent AC. If AC is missing, generate with stated assumptions and add
-  an open question.
-- Avoid duplicate coverage — cross-check `docs/ai/test-case.md` first and reuse
-  an equivalent existing case instead of creating a near-duplicate.
-
-## Priority rules
-- **p0** — core business path; auth / authorization; payment / sign-off;
-  destructive or irreversible action; data integrity risk; security-sensitive
-  behavior; system-blocking regression risk.
-- **p1** — important business validations; common alternate flows; common
-  negative scenarios; high-frequency user actions.
-- **p2** — lower-risk edge cases; cosmetic or secondary behavior; rare
-  combinations; exploratory coverage without clear production criticality.
-- Do not mark everything p0. Prefer business impact over UI complexity. When
-  uncertain and the impact is user-blocking, choose the higher priority.
-
-## Automatable decision (Y / N)
-- `Y` — the flow is deterministic, has stable selectors, and needs no human
-  judgement.
-- `N` — exploratory, visual/UX-subjective, or needing data or steps not
-  reachable through the UI or API.
-- `N` cases stay in `test-case.md` as Manual — they are catalogued, not dropped.
-
-## Surface note (Python framework)
-A case targets one surface; tag the generated test accordingly and put it in the
-matching folder:
-- UI → `tests/ui/` + `@tags(TAGS.REGRESSION, ...)`
-- API → `tests/api/` + `@tags(TAGS.API, ...)` (validate with a pydantic model)
-- gRPC → `tests/grpc/` + `@tags(TAGS.GRPC, ...)` (assert `grpc.StatusCode.*`)
-- Mobile-web → `tests/mobile_web/` + `@tags(TAGS.MOBILE_WEB, ...)`
-- Mobile-native → `tests/mobile/` + `@tags(TAGS.MOBILE, TAGS.MOBILE_NATIVE)` (skip-gated)
-- Known-broken behaviour → add `@tags(TAGS.BUG)` (excluded by `-m "not bugs"`).
+## Rules
+- Decorate every test: `@tags(TAGS.<SURFACE>, TAGS.REGRESSION, TAGS.P0/1/2)` +
+  `@jira("KEY")`.
+- New shared keywords go INTO the surface keyword layer — never call the transport
+  directly in a spec.
+- Reuse existing pages / services / screens before generating new ones.
+- A missing feature marker needs `config/tags.py` + `pyproject.toml` (both
+  patch-guarded) — ask the user; reuse the closest marker meanwhile.
+- Validate each file with `uv run aiqa guard --files <paths>` before finalising.
