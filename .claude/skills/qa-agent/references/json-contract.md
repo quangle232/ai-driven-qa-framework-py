@@ -15,7 +15,10 @@ both the Excel export (STEP 13) and pytest generation (STEP 14).
     "prototypeLink": "",
     "generatedAt": "",
     "approvalRequired": true,
-    "approvalStatus": "draft"
+    "approvalStatus": "draft",
+    "testManagement": "excel",
+    "testExecutionKey": "",
+    "testrailRunId": ""
   },
   "testCases": [],
   "assumptions": [],
@@ -29,7 +32,8 @@ Each test case supports:
 - `feature`
 - `subFeature`
 - `summaryPrecondition`
-- `testDescription`
+- `testDescription` (the case title / summary)
+- `expectedResult` — observable expected outcome (used by the Excel / Xray / TestRail export)
 - `stepDetails` (list of `{ "step", "detail", "element" }`)
 - `priority` (`P0` / `P1` / `P2`)
 - `priorityReason`
@@ -40,7 +44,9 @@ Each test case supports:
 - `automatable` (`true` / `false`) — drives STEP 14
 - `surface` (`ui` / `api` / `grpc` / `mobile_web` / `mobile_native`) — drives STEP 14
 - `specFile` — set in STEP 14 once the pytest file is generated
-- `testResult` (`""` / `Passed` / `Failed`) — set in STEP 16
+- `xrayKey` — set when published to Xray (STEP 13)
+- `testrailCaseId` — set when published to TestRail (STEP 13)
+- `testResult` (`""` / `Passed` / `Failed` / `Skipped`) — set in STEP 16
 - `bugId` — set in STEP 16 if a defect is filed
 - `notes`
 

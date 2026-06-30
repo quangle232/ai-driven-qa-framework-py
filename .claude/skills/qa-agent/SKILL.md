@@ -1,6 +1,6 @@
 ---
 name: qa-agent
-description: AI-driven QA agent for the Python (Playwright + pytest) AI-Driven QA Framework. Use when given a Jira story key, pasted acceptance criteria, or an issue note to design reviewable JSON-first test cases (testing strategy + auto priority scoring + duplicate detection), run a human approval loop, export approved cases to a Trustify-style Excel attached to the Jira story, then convert the approved cases into Playwright/pytest code (POM + ActionKeyword, Service-Object API, typed gRPC client, Appium/mobile-web), execute all, and report results back to the JSON and Jira. Degrades gracefully when MCPs are missing.
+description: AI-driven QA agent for the Python (Playwright + pytest) AI-Driven QA Framework (AIQA). Use when given a Jira story key, pasted acceptance criteria, or an issue note to design reviewable JSON-first test cases (testing strategy + auto priority scoring + duplicate detection), run a human approval loop, publish approved cases to the client's chosen test management (open Excel / Xray / TestRail), then generate Playwright/pytest code from the approved cases (POM + ActionKeyword, Service-Object API, typed gRPC client, Appium/mobile-web; reuse — don't duplicate), execute all, update statuses on the chosen tool, and deliver an HTML execution report. Guides the user through Jira/TestRail MCP setup when unreachable; degrades gracefully when MCPs are missing.
 ---
 
 # QA Agent — Python framework (design → approve → automate → run → report)
@@ -29,17 +29,18 @@ Read and follow these together, in order:
 6. `./references/review-table-rendering.md` — preview table + Jira comment contract
 7. `./references/json-contract.md` — canonical JSON source-of-truth contract
 8. `./references/jira-sync.md` — Jira behaviour (Create Test Case / Execute Testing)
-9. `./references/python-export-runner.md` — Excel export usage
-10. `./references/fallbacks.md` — mandatory fallback behaviour
-11. `./references/framework-conventions.md` — how generated pytest MUST look
-12. `./references/test-case-template.md` — JSON → pytest mapping (automation half)
-13. `./references/tracking-files.md` — `docs/ai/` note context + artifacts
-14. `./references/mcp-usage.md` — Jira / Figma / Playwright + the 4 aiqa servers
+9. `./references/test-management.md` — client's target (open Excel / Xray / TestRail) + status update
+10. `./references/python-export-runner.md` — open Excel export usage
+11. `./references/fallbacks.md` — mandatory fallback + guided MCP setup
+12. `./references/framework-conventions.md` — how generated pytest MUST look
+13. `./references/test-case-template.md` — JSON → pytest mapping (automation half)
+14. `./references/tracking-files.md` — `docs/ai/` note context + artifacts
+15. `./references/mcp-usage.md` — Jira / Figma / Playwright / TestRail + setup + the 4 aiqa servers
 
 Scripts:
 - `./scripts/json_quality_checks.py` — enrich JSON with priority + duplicate flags
   (STEP 7) BEFORE presenting / syncing the table.
-- `./scripts/export_json_to_trustify_excel.py` — Excel export, AFTER approval only.
+- `./scripts/export_json_to_excel.py` — open Excel export, AFTER approval only.
 - `./scripts/find_related_tests.py` / `./scripts/trigger_jenkins.py` — related-test
   discovery + CI execution in the automation half.
 
@@ -67,18 +68,23 @@ instead, skip the Jira fetch and use note context. The automation half (STEP
 - Use examples as formatting guidance only.
 
 ## Hard rules
-- **Approval loop is mandatory.** No Excel export and no code generation before the
-  exact phrase `I approve`. Never bypass it.
+- **Human approval loop is mandatory.** No publish (Excel / Xray / TestRail) and no
+  code generation before the exact phrase `I approve`. Never bypass it.
 - **JSON is the source of truth.** All edits update JSON first; table + code are
   regenerated from it.
+- **Guided MCP setup, not a silent skip.** If the Jira / TestRail MCP is unreachable,
+  warn the user, offer to configure it, and retry BEFORE any note-context / Excel
+  fallback (`fallbacks.md`).
+- **Anti-duplication.** Reuse existing pages / services / screens / specs; never
+  regenerate an equivalent (STEP 14 gate). Honour `duplicateStatus`.
 - **One primary review table** — no derived / summary / analytics /
   priority-distribution / automation-candidate tables in the conversation or in any
   synced content.
-- **Excel attaches to the parent Jira user story only** — never to `Create Test
-  Case` or `Execute Testing`.
+- **Publish to the parent Jira user story only** — the Excel / Xray tests link to
+  the story, never to `Create Test Case` or `Execute Testing`.
 - **Persist JSON + Excel to `docs/ai/`** whenever generated, even if Jira is up.
-- **Never hard-fail** on Jira / Figma / Playwright / MCP errors — fall back and
-  continue (`fallbacks.md`).
+- **Never hard-fail** on Figma / Playwright / MCP errors — fall back and continue
+  (`fallbacks.md`); for Jira / TestRail, run the guided setup first.
 - **Respect the patch guard** in the automation half (`uv run aiqa guard`); never
   write a patch-guarded path (`config/`, `pyproject.toml`, `conftest.py`, etc.) —
   surface it to the user.
@@ -98,9 +104,10 @@ instead, skip the Jira fetch and use note context. The automation half (STEP
 9. `json-contract.md`
 10. `test-case-template.md`
 11. `jira-sync.md`
-12. `tracking-files.md`
-13. `mcp-usage.md`
-14. `fallbacks.md`
+12. `test-management.md`
+13. `tracking-files.md`
+14. `mcp-usage.md`
+15. `fallbacks.md`
 
 ## Reducing permission prompts
 This skill writes/edits files and runs `uv` / `pytest` / `python3`. The user can

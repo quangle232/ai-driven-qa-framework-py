@@ -40,6 +40,12 @@ unsupported, comment the path + approval status + manual-attach note on the stor
 Also add/update a final story comment with the approved review summary, test-case
 count, coverage summary, and approval status.
 
+**Target note (`test-management.md`):** the above is the **Excel** target. For
+**Xray**, the published `Test` issues live in Jira and a `Test Execution` carries
+the results — nothing extra to attach to the story. For **TestRail**, cases and
+results live in TestRail; comment the run link on the story. STEP 16 updates the
+statuses on whichever target the client chose.
+
 ## STEP E — `Execute Testing` item (automation half)
 - Create as a subtask under the parent story (or linked `Task`).
 - Purpose: execution tracking, worklog, **and the automation results** from

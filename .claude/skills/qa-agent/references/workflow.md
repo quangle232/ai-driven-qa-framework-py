@@ -6,7 +6,7 @@ Transform a Jira user story (or pasted AC / note context) into:
 - **canonical JSON** test cases (the single source of truth)
 - an editable **review table** + human approval loop
 - approved final JSON
-- an **Excel** export artifact (Trustify template) attached to the Jira story
+- a test-management artifact in the client's chosen tool (open Excel / Xray / TestRail)
 - **generated Playwright/pytest code** for the approved automatable cases
 - a **full run** of those + related existing tests, with results reported back
 - Jira synchronization + artifact persistence to `docs/ai/`
@@ -30,9 +30,11 @@ without updating JSON first.
 ---
 
 ## STEP 0 — Input
-Primary: Jira user story via MCP. **Fallback** (Jira MCP unavailable / no story /
-missing key / permission / tool failure): use note context under `docs/ai/`,
-continue the full workflow without blocking. See `fallbacks.md`.
+Primary: Jira user story via MCP. If the Jira MCP is unreachable, do NOT silently
+degrade — run the **guided Jira MCP setup** (warn the user → offer to configure
+`.mcp.json` → reload → retry the fetch and confirm the user story is reachable) per
+`fallbacks.md` + `mcp-usage.md`. Only use note context under `docs/ai/` if the user
+declines or it still fails.
 
 ## STEP 1 — Fetch + parse story
 Extract: title, description, acceptance criteria, **labels**, **status**, Figma
@@ -106,13 +108,17 @@ Only on exact `I approve`: freeze the canonical JSON, set
 `meta.approvalStatus = "approved"`. This frozen JSON is the only input to both
 the Excel export and the code generation below.
 
-## STEP 13 — Export Excel + attach
-- Export with `scripts/export_json_to_trustify_excel.py` (see
-  `python-export-runner.md`) →
-  `test-output/qa/TestCases_<feature>.xlsx`.
-- Persist the Excel to `docs/ai/testcases/` and attach it to the **parent Jira
-  user story only** (never to a subtask) — see `jira-sync.md`. If direct attach
-  is unsupported, comment the path on the story.
+## STEP 13 — Publish to the chosen test management
+Ask the client which target they want (default **Excel**); record it in
+`meta.testManagement`. See `test-management.md`.
+- **Excel (open / default)** — `scripts/export_json_to_excel.py` (see
+  `python-export-runner.md`) → `test-output/qa/TestCases_<feature>.xlsx`; persist to
+  `docs/ai/testcases/` and attach to the **parent Jira user story only** (never a
+  subtask). If direct attach is unsupported, comment the path on the story.
+- **Xray** — create Jira `Test` issues from the approved JSON via the Jira MCP;
+  store each `xrayKey` back into the case.
+- **TestRail** — create cases + a run via the TestRail MCP (needs config; guided
+  setup in `fallbacks.md`); store `testrailCaseId` / `meta.testrailRunId`.
 
 ---
 
@@ -120,6 +126,11 @@ the Excel export and the code generation below.
 For each approved case where `automatable` is true / `duplicateStatus` is not a
 removal, turn the manual JSON case into runnable pytest per
 `framework-conventions.md` and `test-case-template.md` (the JSON↔pytest mapping):
+- **Anti-duplication gate (do this FIRST):** query the `framework-context` MCP and
+  scan `pages/` / `api/services/` / `mobile/screens/` / `tests/` (plus
+  `python3 scripts/find_related_tests.py <marker>`). If an equivalent page object,
+  service, screen, or spec already exists, REUSE or extend it — never regenerate a
+  near-duplicate. Skip JSON cases flagged `duplicateStatus: "duplicate"`.
 - **UI** → Page Object in `pages/<name>_page.py` (extends `BasePage`, selectors as
   class attrs from the JSON `element` values, interaction via `self.keyword.*`);
   spec in `tests/ui/test_<feature>.py`.
@@ -149,29 +160,37 @@ removal, turn the manual JSON case into runnable pytest per
 - "Execute all" = the newly generated cases **and** the related existing cases for
   the story's marker(s).
 
-## STEP 16 — Report back *(automation half)*
-- `uv run aiqa report-all` → `test-output/ai/` (stakeholder report).
-- Write results back into the JSON: per case set `testResult` (Passed/Failed) and
-  `bugId` if a defect was filed (the framework's `jira/bug_reporter.py` auto-files
-  a Jira bug on the final failed attempt for `@jira` specs). Re-persist the JSON.
+## STEP 16 — Update statuses + report back *(automation half)*
+- Write results back into the JSON: per case set `testResult`
+  (Passed/Failed/Skipped) and `bugId` if a defect was filed (the framework's
+  `jira/bug_reporter.py` auto-files a Jira bug on the final failed attempt for
+  `@jira` specs). Re-persist the JSON.
+- **Update statuses on the chosen test-management server** (see
+  `test-management.md`): Excel → re-export with `Status`/`Bug ID` filled; Xray →
+  create a `Test Execution` and set each test PASS/FAIL; TestRail → add results to
+  the run.
+- **Deliver the HTML execution report to the user**: `uv run aiqa report-all` →
+  `test-output/ai/` (stakeholder HTML); surface the path/link to the user.
 - Update `docs/ai/`: `test-case.md` statuses, `memory.md` "Run history",
-  `navigation.md` new routes.
-- Create / update the **`Execute Testing`** subtask with the run summary, the
-  report link, pass/fail counts, and any bug IDs (see `jira-sync.md`). Refresh the
-  review table's `Test Result` / `Bug ID` columns and re-sync.
+  `navigation.md` new routes. Create / update the **`Execute Testing`** item with the
+  run summary, report link, pass/fail counts, and bug IDs (see `jira-sync.md`).
+  Refresh the review table's `Test Result` / `Bug ID` columns and re-sync.
 
 ---
 
 ## Hard rules
-- **Approval loop is mandatory.** No Excel export and no code generation before the
-  exact phrase `I approve`.
+- **Human approval loop is mandatory.** No publish (Excel / Xray / TestRail) and no
+  code generation before the exact phrase `I approve`. Never bypass it.
 - **JSON is the source of truth.** Table and code are always regenerated from JSON.
-- **Excel attaches to the parent user story only** — never to `Create Test Case`
-  or `Execute Testing`.
-- **Persist JSON and Excel to `docs/ai/`** whenever generated, even if Jira is up.
+- **Guided MCP setup, not a silent skip.** If the Jira / TestRail MCP is unreachable,
+  warn the user, offer to configure it, and retry BEFORE any note-context / Excel
+  fallback (`fallbacks.md`).
+- **Anti-duplication.** Reuse existing pages / services / screens / specs; never
+  regenerate an equivalent (STEP 14 gate). Honour `duplicateStatus`.
+- **Publish to the parent user story only** — the Excel / Xray tests link to the
+  story, never to `Create Test Case` or `Execute Testing`.
+- **Persist JSON + Excel to `docs/ai/`** whenever generated, even if Jira is up.
 - **One primary review table** — no derived/summary/analytics tables anywhere.
-- **Never hard-fail** on Jira / Figma / Playwright / MCP errors — fall back and
-  continue (`fallbacks.md`).
 - **Respect the patch guard** in the automation half; surface guarded edits to the
   user, never write them.
 - All comments in English; update `docs/ai/` after every enrichment, edit, and run.

@@ -8,7 +8,10 @@
     "prototypeLink": "https://prototype.example.com/login",
     "generatedAt": "2026-06-30T00:00:00Z",
     "approvalRequired": true,
-    "approvalStatus": "draft"
+    "approvalStatus": "draft",
+    "testManagement": "excel",
+    "testExecutionKey": "",
+    "testrailRunId": ""
   },
   "testCases": [
     {
@@ -17,6 +20,7 @@
       "subFeature": "Password login",
       "summaryPrecondition": "User is on the login page with a valid account",
       "testDescription": "Verify user can log in with valid email and password",
+      "expectedResult": "User is signed in and the dashboard / avatar is shown",
       "stepDetails": [
         { "step": 1, "detail": "Open the login page", "element": "[data-test-id=\"login\"]" },
         { "step": 2, "detail": "Enter a valid email and password", "element": "[data-test-id=\"email\"]" },
@@ -31,6 +35,8 @@
       "automatable": true,
       "surface": "ui",
       "specFile": "",
+      "xrayKey": "",
+      "testrailCaseId": "",
       "testResult": "",
       "bugId": "",
       "notes": ""
@@ -41,6 +47,7 @@
       "subFeature": "Password login",
       "summaryPrecondition": "User is on the login page",
       "testDescription": "Verify a validation message is shown when the password is empty",
+      "expectedResult": "An inline validation message is shown and the form is not submitted",
       "stepDetails": [
         { "step": 1, "detail": "Leave the password empty and submit", "element": "button[type=\"submit\"]" }
       ],
@@ -53,6 +60,8 @@
       "automatable": true,
       "surface": "ui",
       "specFile": "",
+      "xrayKey": "",
+      "testrailCaseId": "",
       "testResult": "",
       "bugId": "",
       "notes": ""

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""export_json_to_trustify_excel.py — approved QA JSON -> Trustify-style Excel.
+"""export_json_to_excel.py — approved QA JSON -> open, tool-agnostic Excel.
 
-STEP 13 of the workflow. Reads the approved canonical JSON (see
-references/json-contract.md) and writes an .xlsx in the Trustify test-case format.
+STEP 13 (Excel target) of the workflow. Reads the approved canonical JSON (see
+references/json-contract.md) and writes an .xlsx in an OPEN test-case format whose
+columns import cleanly into Xray, TestRail, Zephyr, etc. — the neutral interchange
+the client can take into whichever test-management tool they choose.
 
 Needs openpyxl, which is NOT a framework dependency — run it with an ephemeral
 dependency so pyproject.toml (patch-guarded) is untouched:
 
     uv run --with openpyxl python3 \
-      .claude/skills/qa-agent/scripts/export_json_to_trustify_excel.py \
+      .claude/skills/qa-agent/scripts/export_json_to_excel.py \
       --json docs/ai/testcases/TestCases_<feature>.json \
       --out test-output/qa/TestCases_<feature>.xlsx
 
-Pass --template <file.xlsx> to fill an existing template instead of a fresh book.
-Export only AFTER the exact approval phrase `I approve`.
+Pass --template <file.xlsx> to fill a tool-specific template instead of a fresh
+book. Export only AFTER the exact approval phrase `I approve`.
 """
 
 from __future__ import annotations
@@ -25,21 +27,26 @@ from typing import Any
 
 from openpyxl import Workbook, load_workbook
 
+# Open, tool-agnostic header set (imports cleanly into Xray / TestRail / Zephyr).
 EXPECTED_HEADERS = [
-    "TC ID",
+    "ID",
+    "Title",
     "Feature",
     "Sub-feature",
-    "Summary & Specific pre-condition",
-    "Test Description",
-    "Pr.",
-    "Test Result",
+    "Preconditions",
+    "Steps",
+    "Expected Result",
+    "Priority",
+    "Type",
+    "AC",
+    "Status",
     "Bug ID",
     "Notes",
 ]
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Export QA JSON to Trustify-style Excel.")
+    parser = argparse.ArgumentParser(description="Export QA JSON to an open Excel format.")
     parser.add_argument("--json", required=True, help="Path to approved JSON file.")
     parser.add_argument("--out", required=True, help="Path to output XLSX file.")
     parser.add_argument("--template", required=False, help="Optional XLSX template path.")
@@ -91,16 +98,6 @@ def stringify_step_details(step_details: Any) -> str:
     return "\n".join(lines)
 
 
-def build_test_description(tc: dict[str, Any]) -> str:
-    value = tc.get("testDescription", "")
-    step_text = stringify_step_details(tc.get("stepDetails"))
-    if value and step_text:
-        return f"{value}\n\nStep details:\n{step_text}"
-    if step_text:
-        return step_text
-    return str(value) if value is not None else ""
-
-
 def build_notes(tc: dict[str, Any]) -> str:
     note_parts = []
     if tc.get("notes"):
@@ -116,7 +113,26 @@ def build_notes(tc: dict[str, Any]) -> str:
     return "\n".join(note_parts)
 
 
-def export(data: dict[str, Any], out_path: str, template_path: str | None) -> None:
+def row_for(tc: dict[str, Any], default_feature: str) -> list[str]:
+    tc_type = "Automation" if tc.get("automatable") else "Manual"
+    return [
+        tc.get("tcId", ""),
+        tc.get("testDescription", ""),
+        tc.get("feature", default_feature),
+        tc.get("subFeature", ""),
+        tc.get("summaryPrecondition", ""),
+        stringify_step_details(tc.get("stepDetails")),
+        tc.get("expectedResult", ""),
+        str(tc.get("priority", "")),
+        tc_type,
+        ", ".join(tc.get("acIds", []) or []),
+        tc.get("testResult", ""),
+        tc.get("bugId", ""),
+        build_notes(tc),
+    ]
+
+
+def export(data: dict[str, Any], out_path: str, template_path: str | None) -> int:
     wb, ws = ensure_workbook(template_path)
     ensure_headers(ws)
 
@@ -126,30 +142,21 @@ def export(data: dict[str, Any], out_path: str, template_path: str | None) -> No
     if ws.max_row > 1:
         ws.delete_rows(2, ws.max_row - 1)
 
-    for tc in data.get("testCases", []):
-        ws.append(
-            [
-                tc.get("tcId", ""),
-                tc.get("feature", data.get("meta", {}).get("feature", "")),
-                tc.get("subFeature", ""),
-                tc.get("summaryPrecondition", ""),
-                build_test_description(tc),
-                str(tc.get("priority", "")),
-                tc.get("testResult", ""),
-                tc.get("bugId", ""),
-                build_notes(tc),
-            ]
-        )
+    default_feature = data.get("meta", {}).get("feature", "")
+    cases = data.get("testCases", [])
+    for tc in cases:
+        ws.append(row_for(tc, default_feature))
 
     Path(out_path).resolve().parent.mkdir(parents=True, exist_ok=True)
     wb.save(out_path)
+    return len(cases)
 
 
 def main() -> None:
     args = parse_args()
     data = load_json(args.json)
-    export(data, args.out, args.template)
-    print(f"✅ Exported {len(data.get('testCases', []))} test case(s) -> {args.out}")
+    count = export(data, args.out, args.template)
+    print(f"✅ Exported {count} test case(s) -> {args.out}")
 
 
 if __name__ == "__main__":
