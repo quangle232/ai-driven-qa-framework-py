@@ -12,8 +12,8 @@ import os
 
 import pytest
 
-from aiqa_framework.config.env import load_env_file
-from aiqa_framework.jira.bug_reporter import report_bug_to_jira
+from aiqa_framework.shared.config.env import load_env_file
+from aiqa_framework.shared.reporting.bug_reporter import report_bug_to_jira
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -21,12 +21,18 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
-    if os.environ.get("ALLOW_MOBILE_NATIVE"):
-        return
-    skip = pytest.mark.skip(reason="native mobile needs a device + Appium; set ALLOW_MOBILE_NATIVE=1")
-    for item in items:
-        if item.get_closest_marker("mobile_native"):
-            item.add_marker(skip)
+    # Surfaces that need external infra are skip-gated unless explicitly enabled.
+    gates = [
+        ("mobile_native", "ALLOW_MOBILE_NATIVE", "native mobile needs a device + Appium"),
+        ("performance", "ALLOW_PERF", "performance needs a live target + load tool"),
+    ]
+    for marker, env_var, why in gates:
+        if os.environ.get(env_var):
+            continue
+        skip = pytest.mark.skip(reason=f"{why}; set {env_var}=1")
+        for item in items:
+            if item.get_closest_marker(marker):
+                item.add_marker(skip)
 
 
 def _max_reruns(item: pytest.Item) -> int:
@@ -67,4 +73,6 @@ def pytest_runtest_makereport(item: pytest.Item, call):
             "\n".join(longrepr.splitlines()[:12]),
         ]
     )
-    report_bug_to_jira(parent_story_key=story, summary=f"[Auto] {item.name}", description=description)
+    report_bug_to_jira(
+        parent_story_key=story, summary=f"[Auto] {item.name}", description=description
+    )

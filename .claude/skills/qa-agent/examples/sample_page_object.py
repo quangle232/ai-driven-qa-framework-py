@@ -14,7 +14,7 @@ Demonstrates the framework conventions:
 
 from __future__ import annotations
 
-from aiqa_framework.core.base_page import BasePage
+from aiqa_framework.modules.ui.base_page import BasePage
 
 
 class LoginPage(BasePage):

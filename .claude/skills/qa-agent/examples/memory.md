@@ -6,12 +6,12 @@ Phase 0 and updates it in Phase 7 after every generation / run.
 ## Generated work
 | Date | User story | Feature | Marker / Jira label | Artifacts |
 |------|-----------|---------|---------------------|-----------|
-| 2026-06-01 | PROJ-1 | Login | `auth` | tests/ui/test_login.py; pages/login_page.py; testdata/login_data.py |
+| 2026-06-01 | PROJ-1 | Login | `auth` | tests/ui/test_login.py; modules/ui/pages/login_page.py; testdata/login_data.py |
 
 ## Decisions
 - 2026-06-01 — `LoginPage` extends `BasePage`; no separate auth fixture needed
   (the storage state carries the session for subsequent specs).
-- 2026-06-01 — Added `AUTH = pytest.mark.auth` to `config/tags.py` to match the
+- 2026-06-01 — Added `AUTH = pytest.mark.auth` to `shared/config/tags.py` to match the
   Jira label (`tag == label`).
 
 ## Known gaps

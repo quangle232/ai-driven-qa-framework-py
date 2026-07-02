@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from aiqa_framework.core.auth import ensure_auth
+from aiqa_framework.modules.ui.auth import ensure_auth
 
 
 @pytest.fixture(scope="session", autouse=True)

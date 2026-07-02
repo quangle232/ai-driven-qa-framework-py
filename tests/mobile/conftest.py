@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import pytest
 
-from aiqa_framework.mobile.action_keyword import MobileActionKeyword
-from aiqa_framework.mobile.driver_factory import create_driver
+from aiqa_framework.modules.mobile.action_keyword import MobileActionKeyword
+from aiqa_framework.modules.mobile.driver_factory import create_driver
 
 
 @pytest.fixture

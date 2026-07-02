@@ -86,7 +86,7 @@ instead, skip the Jira fetch and use note context. The automation half (STEP
 - **Never hard-fail** on Figma / Playwright / MCP errors — fall back and continue
   (`fallbacks.md`); for Jira / TestRail, run the guided setup first.
 - **Respect the patch guard** in the automation half (`uv run aiqa guard`); never
-  write a patch-guarded path (`config/`, `pyproject.toml`, `conftest.py`, etc.) —
+  write a patch-guarded path (`shared/config/`, `pyproject.toml`, `conftest.py`, etc.) —
   surface it to the user.
 - **`marker == Jira label`** (kebab→snake); JSON `priority` `P0/P1/P2` → marker
   `p0/p1/p2`.

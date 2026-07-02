@@ -97,7 +97,7 @@ Tools (prefix `mcp__playwright__`): `browser_navigate`, `browser_snapshot`,
 
 | Server | Use |
 |--------|-----|
-| `framework-context` | **Call BEFORE STEP 14 code-gen** — conventions, the `TAGS` map, existing pages/services/screens, so generated code matches and is not duplicated. |
+| `framework-context` | **Call BEFORE STEP 14 code-gen** — conventions, the `TAGS` map, existing modules/ui/pages/services/screens, so generated code matches and is not duplicated. |
 | `qa-report` | Read the latest `test-output/` run results (STEP 16). |
 | `memory` | Read the `docs/ai/` trackers + artifacts (`tracking-files.md`). |
 | `test-runner` | Trigger / inspect a pytest run (read-only surface). |

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from aiqa_framework.core.auth import STORAGE_STATE
+from aiqa_framework.modules.ui.auth import STORAGE_STATE
 
 
 @pytest.fixture

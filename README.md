@@ -19,7 +19,7 @@ servers** — all on one pytest runner. Python port of the TypeScript framework.
 ## Setup
 
 ```bash
-uv sync --extra dev
+uv sync --extra all --extra dev
 uv run playwright install --with-deps chromium
 uv run poe proto-gen                       # generate gRPC stubs
 cp environments/.env.test.example environments/.env.test   # fill in SUT URL + login
@@ -37,24 +37,26 @@ uv run aiqa report-all         # collect → diagnose → finalize → stakehold
 ```
 
 `test_env` selects the env file: `test_env=prod uv run pytest …` → `.env.prod`
-(default `test`; valid `dev|test|prod` — resolver in `src/aiqa_framework/config/env.py`).
+(default `test`; valid `dev|test|prod` — resolver in `src/aiqa_framework/shared/config/env.py`).
 
 ## Layout
 
 ```
 src/aiqa_framework/
-  config/    env resolver · pydantic settings · tag markers
-  core/      action_keyword.py (single keyword layer) · base_page.py · auth.py
-  pages/     Page Objects (sample_page.py)
-  api/       client.py (httpx) · models.py (pydantic) · services/ · mock/ (respx + FastAPI) · contracts/
-  grpc/      proto/ · generated/ (poe proto-gen) · client.py · mock_server.py
-  mobile/    capabilities.py · driver_factory.py · action_keyword.py · screens/
-  jira/      bug_reporter.py (failure → Bug)
-  ai_qa_agent/  schemas · collectors · watchers · analyzers · agents · reports · providers · cli.py (`aiqa`)
+  shared/      config (env · settings · tags) · reporting (Jira bug) · memory · helpers
+  modules/
+    ui/          Playwright — action_keyword · base_page · pages/ · auth · mobile_web/ · api_support
+    api/         rest/ (httpx SOM · models · services · mock · contracts) · grpc/ · graphql/
+    performance/ locust/ · jmeter/
+    mobile/      native Appium — action_keyword · capabilities · driver_factory · screens/
+  agent/       schemas · collectors · watchers · analyzers · agents · reports · providers · cli.py (`aiqa`)
   mcp_servers/  qa_report · framework_context · memory · test_runner (FastMCP)
-tests/  ui/ · api/ · grpc/ · mobile/ · mobile_web/
-ci/     github-actions/ · gitlab/ · jenkins/
+tests/  ui/ (+ ui/mobile_web) · api/{rest,grpc,graphql} · performance/ · mobile/
+docs/ai/<module>/  per-module AI memory     ci/  github-actions · gitlab · jenkins
 ```
+
+Each surface is isolable via an extra: `uv sync --extra <ui|api|grpc|graphql|mobile|perf>`
+then `uv run pytest -m <marker>` (or the module's README run-in-isolation block).
 
 ## Conventions
 

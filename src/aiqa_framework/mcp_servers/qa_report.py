@@ -20,10 +20,12 @@ _OUT = "test-output/ai"
 @mcp.tool()
 def get_run_summary() -> dict:
     """Pass/fail summary + CI metadata for the last run."""
-    return cap({
-        "summary": read_json(f"{_OUT}/summary.json", {}),
-        "ci": read_json(f"{_OUT}/ci-metadata.json", {}),
-    })
+    return cap(
+        {
+            "summary": read_json(f"{_OUT}/summary.json", {}),
+            "ci": read_json(f"{_OUT}/ci-metadata.json", {}),
+        }
+    )
 
 
 @mcp.tool()
@@ -41,8 +43,8 @@ def get_failure_clusters() -> list:
 @mcp.tool()
 def get_critical_events() -> list:
     """Critical patterns detected from the last run's failures."""
-    from aiqa_framework.ai_qa_agent.schemas.failure_event import FailureEvent
-    from aiqa_framework.ai_qa_agent.watchers.critical_pattern_detector import detect_criticals
+    from aiqa_framework.agent.schemas.failure_event import FailureEvent
+    from aiqa_framework.agent.watchers.critical_pattern_detector import detect_criticals
 
     failures = [FailureEvent(**f) for f in read_json(f"{_OUT}/failures.json", [])]
     return cap([c.__dict__ for c in detect_criticals(failures)])

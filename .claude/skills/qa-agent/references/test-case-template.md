@@ -24,11 +24,11 @@ removal (`duplicateStatus != "duplicate"`).
 ## Surface → target
 | `surface` | Spec folder | Markers | Keyword layer / object |
 |-----------|-------------|---------|------------------------|
-| `ui` | `tests/ui/test_<feature>.py` | `TAGS.REGRESSION` (+ priority) | Page Object in `pages/`, `self.keyword.*` |
-| `api` | `tests/api/test_<feature>.py` | `TAGS.API` | service in `api/services/`, pydantic models |
-| `grpc` | `tests/grpc/test_<feature>.py` | `TAGS.GRPC` | `grpc/client.py`, assert `grpc.StatusCode.*` |
+| `ui` | `tests/ui/test_<feature>.py` | `TAGS.REGRESSION` (+ priority) | Page Object in `modules/ui/pages/`, `self.keyword.*` |
+| `api` | `tests/api/test_<feature>.py` | `TAGS.API` | service in `modules/api/rest/services/`, pydantic models |
+| `grpc` | `tests/grpc/test_<feature>.py` | `TAGS.GRPC` | `modules/api/grpc/client.py`, assert `grpc.StatusCode.*` |
 | `mobile_web` | `tests/mobile_web/test_<feature>.py` | `TAGS.MOBILE_WEB` | reuse the web POM |
-| `mobile_native` | `tests/mobile/test_<feature>.py` | `TAGS.MOBILE, TAGS.MOBILE_NATIVE` | `mobile/screens/` + `MobileActionKeyword` (skip-gated) |
+| `mobile_native` | `tests/mobile/test_<feature>.py` | `TAGS.MOBILE, TAGS.MOBILE_NATIVE` | `modules/mobile/screens/` + `MobileActionKeyword` (skip-gated) |
 
 ## Generated shape (see `../examples/`)
 - Page Object: `../examples/sample_page_object.py` — `extends BasePage`, selectors
@@ -43,6 +43,6 @@ removal (`duplicateStatus != "duplicate"`).
 - New shared keywords go INTO the surface keyword layer — never call the transport
   directly in a spec.
 - Reuse existing pages / services / screens before generating new ones.
-- A missing feature marker needs `config/tags.py` + `pyproject.toml` (both
+- A missing feature marker needs `shared/config/tags.py` + `pyproject.toml` (both
   patch-guarded) — ask the user; reuse the closest marker meanwhile.
 - Validate each file with `uv run aiqa guard --files <paths>` before finalising.

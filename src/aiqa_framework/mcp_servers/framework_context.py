@@ -34,12 +34,18 @@ def get_conventions() -> str:
 @mcp.tool()
 def get_existing_code_index() -> dict:
     """Pages, API services, mobile screens, and specs that already exist."""
-    return cap({
-        "pages": [p.name for p in (_SRC / "pages").glob("*.py") if p.name != "__init__.py"],
-        "api_services": [p.name for p in (_SRC / "api/services").glob("*.py") if p.name != "__init__.py"],
-        "screens": [p.name for p in (_SRC / "mobile/screens").glob("*.py") if p.name != "__init__.py"],
-        "specs": [str(p) for p in Path("tests").rglob("test_*.py")],
-    })
+    return cap(
+        {
+            "pages": [p.name for p in (_SRC / "pages").glob("*.py") if p.name != "__init__.py"],
+            "api_services": [
+                p.name for p in (_SRC / "api/services").glob("*.py") if p.name != "__init__.py"
+            ],
+            "screens": [
+                p.name for p in (_SRC / "mobile/screens").glob("*.py") if p.name != "__init__.py"
+            ],
+            "specs": [str(p) for p in Path("tests").rglob("test_*.py")],
+        }
+    )
 
 
 @mcp.tool()
@@ -52,7 +58,9 @@ def find_page_object(name: str) -> list:
 def list_action_keywords() -> list:
     """Public methods on ActionKeyword (the single UI keyword layer)."""
     src = (_SRC / "core/action_keyword.py").read_text()
-    return sorted(set(re.findall(r"^\s{4}def\s+([a-z][a-z0-9_]*)\s*\(", src, re.MULTILINE)) - {"__init__"})
+    return sorted(
+        set(re.findall(r"^\s{4}def\s+([a-z][a-z0-9_]*)\s*\(", src, re.MULTILINE)) - {"__init__"}
+    )
 
 
 @mcp.tool()

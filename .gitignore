@@ -20,9 +20,9 @@ allure-results/
 allure-report/
 
 # Generated gRPC stubs (regenerate with `poe proto-gen`)
-src/aiqa_framework/grpc/generated/*_pb2.py
-src/aiqa_framework/grpc/generated/*_pb2.pyi
-src/aiqa_framework/grpc/generated/*_pb2_grpc.py
+src/aiqa_framework/modules/api/grpc/generated/*_pb2.py
+src/aiqa_framework/modules/api/grpc/generated/*_pb2.pyi
+src/aiqa_framework/modules/api/grpc/generated/*_pb2_grpc.py
 
 # Real env files — only the *.example templates are committed.
 environments/.env.*

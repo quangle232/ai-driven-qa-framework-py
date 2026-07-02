@@ -21,7 +21,7 @@ pipeline {
       steps {
         sh '''
           pip install -q uv
-          uv sync --extra dev
+          uv sync --extra all --extra dev
           uv run playwright install --with-deps chromium
           uv run poe proto-gen
         '''

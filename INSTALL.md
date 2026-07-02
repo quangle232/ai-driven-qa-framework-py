@@ -5,15 +5,15 @@
 
 ## Setup
 ```bash
-uv sync --extra dev                         # runtime + dev deps (ruff, mypy, grpcio-tools, poe)
+uv sync --extra all --extra dev                         # runtime + dev deps (ruff, mypy, grpcio-tools, poe)
 uv run playwright install --with-deps chromium
-uv run poe proto-gen                        # generate gRPC stubs into src/aiqa_framework/grpc/generated
+uv run poe proto-gen                        # generate gRPC stubs into src/aiqa_framework/modules/api/grpc/generated
 cp environments/.env.test.example environments/.env.test
 cp environments/.env.jira.example environments/.env.jira   # optional (failure → Bug)
 ```
 
 ## Make it yours
-1. **Auth** — implement `authenticate()` in `src/aiqa_framework/core/auth.py` (your SUT sign-in;
+1. **Auth** — implement `authenticate()` in `src/aiqa_framework/modules/ui/auth.py` (your SUT sign-in;
    save `context.storage_state(path=STORAGE_STATE)`).
 2. **Env** — fill `environments/.env.<env>` (URLs, creds). `test_env` picks the file.
 3. **First flow** — replace `pages/sample_page.py` + `tests/ui/test_sample.py`.

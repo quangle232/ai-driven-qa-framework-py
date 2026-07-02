@@ -1,47 +1,40 @@
 [project]
 name = "aiqa-framework"
 version = "0.1.0"
-description = "AI-Driven QA Framework (Python port) — Playwright + pytest, POM + ActionKeyword, API/gRPC/mobile, AI QA Agent, MCP servers."
+description = "AIQA — AI-Driven QA Framework: modular UI (Playwright) · API (REST/gRPC/GraphQL) · Performance (Locust/JMeter) · Mobile (Appium), with an AI QA agent + MCP servers. Each surface installs and runs in isolation via optional extras."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
-    # UI
-    "playwright>=1.48",
+    # base — always installed; each surface's deps live in the extras below
     "pytest>=8.3",
-    "pytest-playwright>=0.5",
     "pytest-xdist>=3.6",
     "pytest-rerunfailures>=14.0",
-    # API
-    "httpx>=0.27",
+    "pytest-json-report>=1.5",
     "pydantic>=2.9",
     "pydantic-settings>=2.5",
     "python-dotenv>=1.0",
-    # gRPC
-    "grpcio>=1.66",
-    "protobuf>=5.28",
-    "pytest-grpc>=0.8",
-    # Mobile (native)
-    "Appium-Python-Client>=4.1",
-    # Reporting
-    "allure-pytest>=2.13",
-    "pytest-json-report>=1.5",
-    "jinja2>=3.1",
-    "python-docx>=1.1",
-    # AI QA Agent
-    "watchdog>=5.0",
-    "anthropic>=0.39",
-    "openai>=1.50",
     "typer>=0.12",
-    # API mock server
-    "fastapi>=0.115",
-    "uvicorn>=0.31",
-    "respx>=0.21",
-    # MCP servers
-    "mcp>=1.1",
 ]
 
 [project.optional-dependencies]
+# One extra per surface — install only what you run.
+ui = ["playwright>=1.48", "pytest-playwright>=0.5"]
+api = ["httpx>=0.27", "respx>=0.21", "fastapi>=0.115", "uvicorn>=0.31"]
+grpc = ["grpcio>=1.66", "protobuf>=5.28", "pytest-grpc>=0.8"]
+graphql = ["httpx>=0.27", "fastapi>=0.115", "uvicorn>=0.31"]
+mobile = ["Appium-Python-Client>=4.1"]
+perf = ["locust>=2.31"]
+agent = ["anthropic>=0.39", "openai>=1.50", "watchdog>=5.0", "mcp>=1.1"]
+reporting = ["allure-pytest>=2.13", "python-docx>=1.1", "jinja2>=3.1"]
+all = [
+    "playwright>=1.48", "pytest-playwright>=0.5",
+    "httpx>=0.27", "respx>=0.21", "fastapi>=0.115", "uvicorn>=0.31",
+    "grpcio>=1.66", "protobuf>=5.28", "pytest-grpc>=0.8",
+    "Appium-Python-Client>=4.1", "locust>=2.31",
+    "anthropic>=0.39", "openai>=1.50", "watchdog>=5.0", "mcp>=1.1",
+    "allure-pytest>=2.13", "python-docx>=1.1", "jinja2>=3.1",
+]
 dev = [
     "ruff>=0.6",
     "mypy>=1.11",
@@ -52,7 +45,7 @@ dev = [
 ]
 
 [project.scripts]
-aiqa = "aiqa_framework.ai_qa_agent.cli:app"
+aiqa = "aiqa_framework.agent.cli:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -75,9 +68,11 @@ markers = [
     "p2: priority 2",
     "api: REST API tests",
     "grpc: gRPC tests",
+    "graphql: GraphQL API tests",
     "mobile: mobile tests (web or native)",
     "mobile_web: Playwright mobile-web emulation",
     "mobile_native: native Appium (needs a device; skip-gated by ALLOW_MOBILE_NATIVE)",
+    "performance: load tests (needs a target + tool; skip-gated by ALLOW_PERF)",
     "bugs: asserts currently-broken behaviour (expected to fail)",
 ]
 
@@ -85,9 +80,20 @@ markers = [
 line-length = 100
 target-version = "py311"
 src = ["src", "tests"]
+extend-exclude = ["src/aiqa_framework/modules/api/grpc/generated"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Embedded HTML/Jinja template — long lines are intentional.
+"src/aiqa_framework/agent/reports/stakeholder_html.py" = ["E501"]
+# Illustrative skill examples (import a not-yet-generated module).
+".claude/skills/qa-agent/examples/*.py" = ["I001"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Typer/FastAPI use these callables as argument defaults by design.
+extend-immutable-calls = ["typer.Option", "typer.Argument", "fastapi.Depends", "fastapi.Query"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -97,19 +103,22 @@ explicit_package_bases = true
 mypy_path = "src"
 
 # ---------------------------------------------------------------------------
-# Task runner — the `package.json scripts` equivalent.  `uv run poe <task>`.
+# Task runner — `uv run poe <task>`. Per-surface tasks run one module in isolation.
 [tool.poe.tasks]
 test = "pytest"
 "test-dev" = { cmd = "pytest", env = { test_env = "dev" } }
 "test-test" = { cmd = "pytest", env = { test_env = "test" } }
 "test-prod" = { cmd = "pytest", env = { test_env = "prod" } }
+"test-ui" = { cmd = "pytest tests/ui -m regression", env = { test_env = "test" } }
 "test-api" = { cmd = "pytest -m api", env = { test_env = "test", SKIP_WEB_AUTH = "1" } }
 "test-grpc" = { cmd = "pytest -m grpc", env = { test_env = "test", SKIP_WEB_AUTH = "1" } }
+"test-graphql" = { cmd = "pytest -m graphql", env = { test_env = "test", SKIP_WEB_AUTH = "1" } }
 "test-mobile-web" = { cmd = "pytest -m mobile_web", env = { test_env = "test" } }
 "test-mobile-native" = { cmd = "pytest -m mobile_native", env = { test_env = "test", ALLOW_MOBILE_NATIVE = "1" } }
-"mock-api" = "python -m aiqa_framework.api.mock.standalone_app"
-"grpc-mock" = "python -m aiqa_framework.grpc.mock_server"
-"proto-gen" = "python -m grpc_tools.protoc -I src/aiqa_framework/grpc/proto/casino --python_out=src/aiqa_framework/grpc/generated --grpc_python_out=src/aiqa_framework/grpc/generated --pyi_out=src/aiqa_framework/grpc/generated src/aiqa_framework/grpc/proto/casino/game.proto"
+"test-perf" = { cmd = "pytest -m performance", env = { test_env = "test", ALLOW_PERF = "1" } }
+"mock-api" = "python -m aiqa_framework.modules.api.rest.mock.standalone_app"
+"grpc-mock" = "python -m aiqa_framework.modules.api.grpc.mock_server"
+"proto-gen" = "python -m grpc_tools.protoc -I src/aiqa_framework/modules/api/grpc/proto/casino --python_out=src/aiqa_framework/modules/api/grpc/generated --grpc_python_out=src/aiqa_framework/modules/api/grpc/generated --pyi_out=src/aiqa_framework/modules/api/grpc/generated src/aiqa_framework/modules/api/grpc/proto/casino/game.proto"
 "report-all" = "aiqa report-all"
 lint = "ruff check ."
 format = "ruff format ."

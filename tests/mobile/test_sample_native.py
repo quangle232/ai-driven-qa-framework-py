@@ -7,8 +7,8 @@ otherwise auto-skipped by the root conftest.
 
 from __future__ import annotations
 
-from aiqa_framework.config.tags import TAGS, jira, tags
-from aiqa_framework.mobile.screens.sample_login_screen import SampleLoginScreen
+from aiqa_framework.modules.mobile.screens.sample_login_screen import SampleLoginScreen
+from aiqa_framework.shared.config.tags import TAGS, jira, tags
 
 
 @tags(TAGS.MOBILE, TAGS.MOBILE_NATIVE, TAGS.REGRESSION, TAGS.P1)

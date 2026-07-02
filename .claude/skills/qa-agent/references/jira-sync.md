@@ -55,7 +55,7 @@ statuses on whichever target the client chose.
     build URL,
   - the new auto cases (TC ID + title + `specFile`) and the related existing tests
     that were re-run,
-  - any **bug IDs** filed — the framework's `jira/bug_reporter.py` auto-creates a
+  - any **bug IDs** filed — the framework's `shared/reporting/bug_reporter.py` auto-creates a
     Jira bug on the final failed attempt for `@jira`-tagged specs; link those bugs
     here and write them back into the JSON `bugId` + the review table.
 - Keep it lightweight: do not attach the main Excel here or duplicate every case body.

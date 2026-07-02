@@ -127,23 +127,23 @@ For each approved case where `automatable` is true / `duplicateStatus` is not a
 removal, turn the manual JSON case into runnable pytest per
 `framework-conventions.md` and `test-case-template.md` (the JSON↔pytest mapping):
 - **Anti-duplication gate (do this FIRST):** query the `framework-context` MCP and
-  scan `pages/` / `api/services/` / `mobile/screens/` / `tests/` (plus
+  scan `modules/ui/pages/` / `modules/api/rest/services/` / `modules/mobile/screens/` / `tests/` (plus
   `python3 scripts/find_related_tests.py <marker>`). If an equivalent page object,
   service, screen, or spec already exists, REUSE or extend it — never regenerate a
   near-duplicate. Skip JSON cases flagged `duplicateStatus: "duplicate"`.
-- **UI** → Page Object in `pages/<name>_page.py` (extends `BasePage`, selectors as
+- **UI** → Page Object in `modules/ui/pages/<name>_page.py` (extends `BasePage`, selectors as
   class attrs from the JSON `element` values, interaction via `self.keyword.*`);
   spec in `tests/ui/test_<feature>.py`.
-- **API** → service in `api/services/`; pydantic models; spec in `tests/api/`.
-- **gRPC** → `grpc/client.py`; assert `grpc.StatusCode.*`; spec in `tests/grpc/`.
-- **Mobile** → `mobile/screens/` + `MobileActionKeyword`; `tests/mobile/` (native,
+- **API** → service in `modules/api/rest/services/`; pydantic models; spec in `tests/api/`.
+- **gRPC** → `modules/api/grpc/client.py`; assert `grpc.StatusCode.*`; spec in `tests/grpc/`.
+- **Mobile** → `modules/mobile/screens/` + `MobileActionKeyword`; `tests/mobile/` (native,
   skip-gated) or reuse the web POM in `tests/mobile_web/`.
 - Map JSON → pytest: `acIds` → `@jira("<story>")`; JSON `priority` `P0/P1/P2` →
   marker `p0/p1/p2`; feature/label → surface + feature marker. `stepDetails`
   become the spec body steps; `summaryPrecondition` informs fixtures.
 - New shared keywords go INTO the surface keyword layer — never call the transport
-  directly in a spec. Reuse existing pages/services/screens.
-- A new feature marker needs `config/tags.py` + `pyproject.toml`, both
+  directly in a spec. Reuse existing modules/ui/pages/services/screens.
+- A new feature marker needs `shared/config/tags.py` + `pyproject.toml`, both
   **patch-guarded** → ask the user (see `jira-sync.md`); reuse the closest marker
   meanwhile.
 - Validate every generated file with `uv run aiqa guard --files <paths>` before
@@ -163,7 +163,7 @@ removal, turn the manual JSON case into runnable pytest per
 ## STEP 16 — Update statuses + report back *(automation half)*
 - Write results back into the JSON: per case set `testResult`
   (Passed/Failed/Skipped) and `bugId` if a defect was filed (the framework's
-  `jira/bug_reporter.py` auto-files a Jira bug on the final failed attempt for
+  `shared/reporting/bug_reporter.py` auto-files a Jira bug on the final failed attempt for
   `@jira` specs). Re-persist the JSON.
 - **Update statuses on the chosen test-management server** (see
   `test-management.md`): Excel → re-export with `Status`/`Bug ID` filled; Xray →

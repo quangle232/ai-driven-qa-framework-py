@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import os
 
-from aiqa_framework.config.tags import TAGS, jira, tags
-from aiqa_framework.pages.sample_page import SamplePage
-from aiqa_framework.testdata.sample_data import sample_expected, sample_input
+from aiqa_framework.modules.ui.pages.sample_page import SamplePage
+from aiqa_framework.modules.ui.testdata.sample_data import sample_expected, sample_input
+from aiqa_framework.shared.config.tags import TAGS, jira, tags
 
 
 @tags(TAGS.SMOKE, TAGS.P1)

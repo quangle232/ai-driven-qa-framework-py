@@ -13,7 +13,7 @@ variables:
     MARKERS: "regression"
   before_script:
     - pip install -q uv
-    - uv sync --extra dev
+    - uv sync --extra all --extra dev
     - uv run playwright install chromium
     - uv run poe proto-gen
     - mkdir -p environments

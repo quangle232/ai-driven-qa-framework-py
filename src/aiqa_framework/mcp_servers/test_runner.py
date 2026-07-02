@@ -33,7 +33,9 @@ def trigger_targeted_run(marker: str = "smoke") -> dict:
     if not allow_exec():
         return {"ok": False, "error": "execution disabled — set AIQA_ALLOW_EXEC=true"}
     proc = subprocess.run(["pytest", "-m", marker], capture_output=True, text=True)
-    return cap({"ok": proc.returncode == 0, "returncode": proc.returncode, "tail": proc.stdout[-2000:]})
+    return cap(
+        {"ok": proc.returncode == 0, "returncode": proc.returncode, "tail": proc.stdout[-2000:]}
+    )
 
 
 if __name__ == "__main__":

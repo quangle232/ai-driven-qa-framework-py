@@ -5,7 +5,7 @@ not collected by pytest). Pairs with ``sample_page_object.py`` — in a real run
 the qa-agent generates the Page Object into ``aiqa_framework/pages/login_page.py``.
 
 Demonstrates the framework conventions:
-  - import ``TAGS, tags, jira`` from ``aiqa_framework.config.tags`` — the
+  - import ``TAGS, tags, jira`` from ``aiqa_framework.shared.config.tags`` — the
     feature marker value EQUALS the Jira label (so ``-m <label>`` selects it)
   - decorate with ``@tags(...)`` for selection and ``@jira("KEY")`` so any bug
     raised on the final failed attempt links back to the parent user story
@@ -23,9 +23,9 @@ from __future__ import annotations
 
 import os
 
-from aiqa_framework.pages.login_page import LoginPage
+from aiqa_framework.modules.ui.pages.login_page import LoginPage
 
-from aiqa_framework.config.tags import TAGS, jira, tags
+from aiqa_framework.shared.config.tags import TAGS, jira, tags
 
 
 @tags(TAGS.REGRESSION, TAGS.SMOKE, TAGS.P0)
