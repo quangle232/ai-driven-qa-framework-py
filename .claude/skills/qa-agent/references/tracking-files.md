@@ -4,6 +4,8 @@
 **per module** so each surface keeps its own AI memory. `shared/memory/store.py`
 resolves the paths; the `memory` MCP server exposes them. Read at STEP 0; update
 throughout. If a file is missing, create it from the matching `../examples/` file.
+These files are read/written by the skills (`create-test-cases`, `automation-generate`,
+`read-report`, `qa-status`, `flaky-triage`, and `qa-agent`).
 
 ```
 docs/ai/

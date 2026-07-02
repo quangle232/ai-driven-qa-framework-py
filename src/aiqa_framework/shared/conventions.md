@@ -22,3 +22,9 @@ Each surface documents its own rules — read the one you're working in:
 - `modules/api/conventions.md` — REST (Service-Object) · gRPC · GraphQL
 - `modules/performance/conventions.md` — Locust + JMeter
 - `modules/mobile/conventions.md` — native Appium
+
+## Skills
+Reusable agent skills (Claude `.claude/skills/`, Codex `.agents/skills/`) drive the
+workflow — see the catalogue in `AGENTS.md`. Skills read these conventions and the
+per-module `docs/ai/<module>/` memory at runtime, so keep both current
+(`update-conventions` skill).

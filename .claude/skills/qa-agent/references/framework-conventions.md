@@ -36,3 +36,8 @@ tests/  ui/ (+ ui/mobile_web) · api/{rest,grpc,graphql} · performance/ · mobi
   and performance are skip-gated (`ALLOW_MOBILE_NATIVE` / `ALLOW_PERF`).
 - Respect the patch guard (`uv run aiqa guard --files`); comments in English; per-module
   AI memory lives in `docs/ai/<module>/`.
+
+## Skills (agents)
+Reusable skills orchestrate this framework for users — full catalogue in `AGENTS.md`
+(mirrored: Claude `.claude/skills/`, Codex `.agents/skills/`). They read these
+conventions and the per-module `docs/ai/<module>/` memory at runtime.
