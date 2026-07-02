@@ -68,20 +68,29 @@ then `uv run pytest -m <marker>` (or the module's README run-in-isolation block)
 (see `AGENTS.md`). Just ask the agent — e.g. "test EAST-123", "review this diff",
 "run the api tests".
 
-- **Onboard & framework** — `setup` (deps / env / doctor) · `mcp-setup` (connect Jira /
-  Figma / Playwright / TestRail) · `new-module` (scaffold a surface/artifact) ·
-  `ci-setup` (CI pipelines) · `update-conventions` (evolve rules + markers).
-- **Design & plan** — `user-story-test` (story → full run) · `qa-agent` (the full
-  engine) · `create-test-cases` (author + review, no code) · `coverage-gap` (what's not
-  tested).
-- **Build automation** — `explore-app` (discover selectors/routes) ·
-  `automation-generate` (cases → code: ui / api / perf) · `data-factory` (typed test data).
-- **Run & analyze** — `run-tests` (by surface / marker) · `contract-test` (Schemathesis
-  vs OpenAPI) · `visual-regression` (screenshot baselines) · `read-report` (AI failure
-  analysis + Allure) · `qa-status` (QA health snapshot).
-- **Ship & maintain** — `publish-testcases` (→ Excel / Xray / TestRail) · `create-bug`
-  (→ Jira bug) · `review-code` (strict convention review) · `flaky-triage` (flaky
-  detect / quarantine).
+| Skill | Module | Feature | What it does |
+|-------|--------|---------|--------------|
+| `setup` | Onboard & framework | Onboarding | Install extras/browsers/gRPC stubs, env, `authenticate()`, `aiqa doctor` |
+| `mcp-setup` | Onboard & framework | MCP config | Connect Jira / Figma / Playwright / TestRail MCPs (guided `.mcp.json`) |
+| `new-module` | Onboard & framework | Scaffolding | Scaffold a new surface module or page/service/screen skeleton by convention |
+| `ci-setup` | Onboard & framework | CI | Tailor GitHub / GitLab / Jenkins: extras, markers, matrix, reports |
+| `update-conventions` | Onboard & framework | Governance | Evolve conventions + register markers; keep the index/docs in sync |
+| `user-story-test` | Design & plan | End-to-end | Jira story key/URL/AC → run the full qa-agent workflow |
+| `qa-agent` | Design & plan | Engine | The full engine: design → approve → publish → generate → run → report |
+| `create-test-cases` | Design & plan | Test design | Story/AC → author + enrich + review + approve cases (no code) |
+| `coverage-gap` | Design & plan | Coverage audit | AC vs existing tests → uncovered / missing / redundant + cases to add |
+| `explore-app` | Build automation | Exploration · ui | Playwright MCP explores the SUT → selectors/routes → navigation memory |
+| `automation-generate` | Build automation | Code-gen · ui/api/perf | Cases (detailed, or summary → explore) → automation code |
+| `data-factory` | Build automation | Test data | Typed builders (valid / boundary / invalid) in `testdata/` |
+| `run-tests` | Run & analyze | Execution | Run by surface / marker / env (+ reruns), local or Jenkins |
+| `contract-test` | Run & analyze | Contract · api | Schemathesis property/contract testing vs the OpenAPI schema |
+| `visual-regression` | Run & analyze | Visual · ui | Playwright screenshot baselines + tolerance compare |
+| `read-report` | Run & analyze | Reporting | Analyze output, AI failure analysis + fixes, HTML + Allure |
+| `qa-status` | Run & analyze | Health | One-page QA health: runs, coverage, flaky, issues, pending |
+| `publish-testcases` | Ship & maintain | Publishing | Approved JSON → Excel / Xray / TestRail + attach story + status |
+| `create-bug` | Ship & maintain | Bug filing | Failed test / defect → deduped Jira bug linked to the story |
+| `review-code` | Ship & maintain | Code review | Strict convention review + guard / lint / type gates |
+| `flaky-triage` | Ship & maintain | Flaky mgmt | Detect / confirm / quarantine flaky tests + memory |
 
 Typical flow: `setup` → `mcp-setup` → `create-test-cases` (or `user-story-test`) →
 `automation-generate` → `run-tests` → `read-report` → `review-code`. Full catalogue +
