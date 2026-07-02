@@ -12,6 +12,9 @@ description: Run AIQA tests by surface, marker, or tag with the right environmen
 2. **Env + gates**: `test_env=dev|test|prod` (default test). Skip-gates:
    `ALLOW_MOBILE_NATIVE=1` (native mobile), `ALLOW_PERF=1` (performance). API / gRPC /
    GraphQL are mock-backed (no backend needed); UI needs the SUT + browsers.
+   - **Shared-SUT discipline**: for UI against a shared environment, run single-worker
+     (`-n0`, or omit `-n auto`) with `--reruns 2` so parallel tests don't collide.
+     Mock-backed API/gRPC/GraphQL are isolated and safe to parallelize (`-n auto`).
 3. **Related existing tests**: `python3 .claude/skills/qa-agent/scripts/find_related_tests.py <marker>`.
    CI option: `python3 .claude/skills/qa-agent/scripts/trigger_jenkins.py "<markers>" --no-wait`
    then `--status=<build-url>` (see `references/jenkins-trigger.md`).

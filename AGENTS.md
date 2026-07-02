@@ -40,12 +40,13 @@ load its `SKILL.md` and follow it.
 | `automation-generate` | Test cases (detailed, or summary→explore) → code (ui / api / perf) |
 | `run-tests` | Run by surface / marker / env (+ reruns), local or Jenkins |
 | `read-report` | Analyze output, AI failure analysis + fixes, HTML + Allure |
+| `publish-testcases` | Approved JSON cases → Excel / Xray / TestRail + attach story + status |
 | `review-code` | Strict convention review + guard / lint / type gates |
 | `flaky-triage` | Detect / confirm / quarantine flaky tests + memory |
 
 Typical flow: `setup` → `mcp-setup` → `user-story-test` (or `explore-app` →
-`automation-generate`) → `run-tests` → `read-report` → `review-code`; `flaky-triage`
-as needed.
+`automation-generate`) → `run-tests` → `read-report` → `review-code`.
+`publish-testcases` exports already-approved cases on its own; `flaky-triage` as needed.
 
 ## First time
 1. `uv sync --extra all --extra dev` (or only the surfaces you need, e.g. `--extra api`)
