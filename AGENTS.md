@@ -30,27 +30,52 @@ Reusable skills live in `.claude/skills/<name>/SKILL.md` (Claude Code auto-disco
 them) and are mirrored at `.agents/skills/<name>/` for Codex / other tools. To use one,
 load its `SKILL.md` and follow it.
 
+**Onboard & framework**
 | Skill | When to use |
 |-------|-------------|
 | `setup` | First-time onboarding: extras, browsers, gRPC stubs, env, `authenticate()`, doctor |
 | `mcp-setup` | Connect Jira / Figma / Playwright / TestRail MCPs (guided) |
-| `user-story-test` | A Jira story key/URL (or pasted AC) → run the full qa-agent workflow |
+| `new-module` | Scaffold a new surface module (or a page/service/screen skeleton) by convention |
+| `ci-setup` | Generate / tailor CI (GitHub / GitLab / Jenkins): extras, markers, matrix, reports |
+| `update-conventions` | Evolve conventions + register markers; keep the docs/index in sync |
+
+**Design & plan**
+| Skill | When to use |
+|-------|-------------|
+| `user-story-test` | A Jira story key/URL (or pasted AC) → run the full end-to-end workflow |
 | `qa-agent` | The full engine: design → approve → publish → generate → run → report |
 | `create-test-cases` | Story/AC → author + review + approve test cases (design only, no code) |
-| `coverage-gap` | Audit AC vs existing tests → uncovered/missing/redundant + cases to add |
+| `coverage-gap` | Audit AC vs existing tests → uncovered / missing / redundant + cases to add |
+
+**Build automation**
+| Skill | When to use |
+|-------|-------------|
 | `explore-app` | Discover real selectors/routes via the Playwright MCP → navigation memory |
 | `automation-generate` | Test cases (detailed, or summary→explore) → code (ui / api / perf) |
+| `data-factory` | Typed test-data builders (valid / boundary / invalid) in `testdata/` |
+
+**Run & analyze**
+| Skill | When to use |
+|-------|-------------|
 | `run-tests` | Run by surface / marker / env (+ reruns), local or Jenkins |
+| `contract-test` | Schemathesis property/contract testing against the OpenAPI schema |
+| `visual-regression` | Playwright screenshot baselines + tolerance compare for UI |
 | `read-report` | Analyze output, AI failure analysis + fixes, HTML + Allure |
-| `create-bug` | Failed test / defect → deduped, well-formed Jira bug linked to the story |
+| `qa-status` | One-page QA health: runs, coverage, flaky, issues, pending |
+
+**Ship & maintain**
+| Skill | When to use |
+|-------|-------------|
 | `publish-testcases` | Approved JSON cases → Excel / Xray / TestRail + attach story + status |
+| `create-bug` | Failed test / defect → deduped, well-formed Jira bug linked to the story |
 | `review-code` | Strict convention review + guard / lint / type gates |
 | `flaky-triage` | Detect / confirm / quarantine flaky tests + memory |
 
 Typical flow: `setup` → `mcp-setup` → `create-test-cases` (or `user-story-test` for the
-full end-to-end run) → `automation-generate` → `run-tests` → `read-report` → `review-code`.
-`coverage-gap` finds what's missing; `publish-testcases` exports approved cases;
-`create-bug` files a defect; `flaky-triage` handles flaky tests.
+full run) → `automation-generate` → `run-tests` → `read-report` → `review-code`.
+Supporting: `coverage-gap` · `explore-app` · `data-factory` · `contract-test` ·
+`visual-regression` · `publish-testcases` · `create-bug` · `qa-status` · `flaky-triage`;
+`new-module` / `ci-setup` / `update-conventions` extend the framework.
 
 ## First time
 1. `uv sync --extra all --extra dev` (or only the surfaces you need, e.g. `--extra api`)
