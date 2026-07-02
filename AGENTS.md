@@ -1,0 +1,80 @@
+# AGENTS.md — AIQA (AI-Driven QA Framework)
+
+Canonical agent + contributor guide. Works with any AI coding tool: **Claude Code**
+(also reads `CLAUDE.md`, a symlink to this file, and auto-discovers the skill under
+`.claude/skills/`) and **Codex / Cursor / Gemini** (read this `AGENTS.md`). This is
+the single source of truth.
+
+AIQA is a modular QA framework: each testing **surface** is a self-contained,
+isolable module (its own conventions, memory, helpers, tests, and optional-
+dependency extra), plus a failure → Jira-bug reporter, an AI **qa-agent** skill, the
+**`aiqa`** CLI, and 4 read-only MCP servers.
+
+## Using this repo with an AI agent
+To turn a Jira story, pasted acceptance criteria, or an issue note into tests, load
+the **qa-agent skill** and follow it end to end:
+- **Claude Code** — auto-discovered as the `qa-agent` skill; or read
+  `.claude/skills/qa-agent/SKILL.md`.
+- **Codex / other tools** — read `.agents/skills/qa-agent/SKILL.md` (same content)
+  and follow `SKILL.md` + its `references/*.md` in order.
+
+The skill's flow: design JSON-first test cases → enrich (testing strategy, auto
+priority, duplicate detection) → review table + **human approval** (`I approve`) →
+publish to the client's chosen test management (open **Excel** / **Xray** /
+**TestRail**) → generate Playwright/pytest from the approved cases (reuse, don't
+duplicate) → run all → deliver an HTML report + update statuses. Per-module AI
+memory lives in `docs/ai/<module>/`.
+
+## First time
+1. `uv sync --extra all --extra dev` (or only the surfaces you need, e.g. `--extra api`)
+   · `uv run playwright install --with-deps chromium` (ui) · `uv run poe proto-gen` (grpc).
+2. `cp environments/.env.test.example environments/.env.test` and fill SUT URL + login.
+3. Implement `authenticate()` in `src/aiqa_framework/modules/ui/auth.py`.
+4. Replace the `sample` Page Object / spec with your first flow.
+5. `uv run aiqa doctor` to verify the setup.
+
+## Run (per surface — isolation)
+- `uv run poe test-ui | test-api | test-grpc | test-graphql | test-mobile-web | test-mobile-native | test-perf`.
+- Or install one surface and run it: `uv sync --extra api` → `uv run pytest -m "api or grpc or graphql"`.
+- `test_env=dev|test|prod` selects `environments/.env.<env>` (default test; resolver `shared/config/env.py`).
+- Mocks: `uv run poe mock-api` · `uv run poe grpc-mock`. Reports: `uv run aiqa report-all`.
+- Quality: `uv run poe lint` (ruff) · `uv run poe typecheck` (mypy).
+
+## Layout
+```
+src/aiqa_framework/
+  shared/      config (env·settings·tags) · reporting (Jira bug) · memory · helpers
+  modules/
+    ui/          Playwright — action_keyword · base_page · pages/ · auth · mobile_web/ · api_support
+    api/         rest/ (httpx Service-Object) · grpc/ (typed client) · graphql/ (httpx)   [no Playwright]
+    performance/ locust/ · jmeter/
+    mobile/      native Appium — action_keyword · screens/
+  agent/       the `aiqa` CLI + collectors / diagnosis / reports
+  mcp_servers/ 4 read-only MCP servers
+tests/  ui/ (+ ui/mobile_web) · api/{rest,grpc,graphql} · performance/ · mobile/
+docs/ai/<module>/  per-module AI memory (memory.md · test-case.md · navigation.md · testcases/)
+```
+Isolation extras: `ui · api · grpc · graphql · mobile · perf · agent · reporting · all`.
+
+## Conventions
+- One keyword layer per surface; a spec calls Page Objects / services / screens, never
+  the transport (`page.locator` / `httpx` / `grpc` / driver) directly.
+- Markers from `aiqa_framework.shared.config.tags`: `@tags(TAGS.<SURFACE>, TAGS.REGRESSION,
+  TAGS.P1)` + `@jira("KEY")`. Marker value == Jira label (kebab→snake).
+- **Reuse before regenerate** — call the `framework-context` MCP or `uv run aiqa scan`
+  to index existing pages / services / screens / specs.
+- Read the per-module `conventions.md` for the surface you touch:
+  `src/aiqa_framework/modules/{ui,api,performance,mobile}/conventions.md` and
+  `src/aiqa_framework/shared/conventions.md`. `.claude/skills/qa-agent/references/framework-conventions.md`
+  is the index.
+- `@bugs` = expected-fail (green slice `-m "not bugs"`); `mobile_native` + `performance`
+  are skip-gated (`ALLOW_MOBILE_NATIVE` / `ALLOW_PERF`). Comments in English.
+- Respect the patch guard (`uv run aiqa guard --files`). Don't create accounts or type
+  passwords; the user does those.
+
+## AI QA Agent CLI (`aiqa`) + MCP
+- `aiqa collect → diagnose → finalize → report-html` — deterministic pipeline over
+  `test-output/pytest-report.json`; LLM diagnosis when `AI_PROVIDER` has a key (claude/
+  openai; else noop). `aiqa scan` indexes existing code; `aiqa doctor` checks setup.
+- `aiqa mcp-list / mcp-config / mcp-start <server>` — 4 read-only servers:
+  `qa-report` · `framework-context` (call before code-gen) · `memory` · `test-runner`.

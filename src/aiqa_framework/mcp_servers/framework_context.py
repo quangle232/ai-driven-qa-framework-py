@@ -33,16 +33,17 @@ def get_conventions() -> str:
 
 @mcp.tool()
 def get_existing_code_index() -> dict:
-    """Pages, API services, mobile screens, and specs that already exist."""
+    """UI pages, API services/queries, mobile screens, and specs that already exist."""
+
+    def _names(rel: str) -> list[str]:
+        return [p.name for p in (_SRC / rel).glob("*.py") if p.name != "__init__.py"]
+
     return cap(
         {
-            "pages": [p.name for p in (_SRC / "pages").glob("*.py") if p.name != "__init__.py"],
-            "api_services": [
-                p.name for p in (_SRC / "api/services").glob("*.py") if p.name != "__init__.py"
-            ],
-            "screens": [
-                p.name for p in (_SRC / "mobile/screens").glob("*.py") if p.name != "__init__.py"
-            ],
+            "ui_pages": _names("modules/ui/pages"),
+            "api_rest_services": _names("modules/api/rest/services"),
+            "api_graphql_queries": _names("modules/api/graphql/queries"),
+            "mobile_screens": _names("modules/mobile/screens"),
             "specs": [str(p) for p in Path("tests").rglob("test_*.py")],
         }
     )
@@ -51,13 +52,13 @@ def get_existing_code_index() -> dict:
 @mcp.tool()
 def find_page_object(name: str) -> list:
     """Find Page Object files matching a name fragment."""
-    return [str(p) for p in _SRC.glob("pages/*.py") if name.lower() in p.name.lower()]
+    return [str(p) for p in _SRC.glob("modules/ui/pages/*.py") if name.lower() in p.name.lower()]
 
 
 @mcp.tool()
 def list_action_keywords() -> list:
     """Public methods on ActionKeyword (the single UI keyword layer)."""
-    src = (_SRC / "core/action_keyword.py").read_text()
+    src = (_SRC / "modules/ui/action_keyword.py").read_text()
     return sorted(
         set(re.findall(r"^\s{4}def\s+([a-z][a-z0-9_]*)\s*\(", src, re.MULTILINE)) - {"__init__"}
     )

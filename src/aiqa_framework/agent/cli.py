@@ -142,14 +142,15 @@ def guard(files: list[str] = typer.Option(None, "--files", help="Files to check"
 def scan() -> None:
     """Index existing Page Objects / services / screens / specs for reuse."""
     root = Path("src/aiqa_framework")
+
+    def _names(rel: str) -> list[str]:
+        return [p.name for p in (root / rel).glob("*.py") if p.name != "__init__.py"]
+
     index = {
-        "pages": [p.name for p in (root / "pages").glob("*.py") if p.name != "__init__.py"],
-        "api_services": [
-            p.name for p in (root / "api/services").glob("*.py") if p.name != "__init__.py"
-        ],
-        "screens": [
-            p.name for p in (root / "mobile/screens").glob("*.py") if p.name != "__init__.py"
-        ],
+        "ui_pages": _names("modules/ui/pages"),
+        "api_rest_services": _names("modules/api/rest/services"),
+        "api_graphql_queries": _names("modules/api/graphql/queries"),
+        "mobile_screens": _names("modules/mobile/screens"),
         "specs": [str(p) for p in Path("tests").rglob("test_*.py")],
     }
     (ai_qa_out_dir() / "existing-code-index.json").write_text(json.dumps(index, indent=2))
