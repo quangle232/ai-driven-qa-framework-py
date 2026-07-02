@@ -36,17 +36,21 @@ load its `SKILL.md` and follow it.
 | `mcp-setup` | Connect Jira / Figma / Playwright / TestRail MCPs (guided) |
 | `user-story-test` | A Jira story key/URL (or pasted AC) → run the full qa-agent workflow |
 | `qa-agent` | The full engine: design → approve → publish → generate → run → report |
+| `create-test-cases` | Story/AC → author + review + approve test cases (design only, no code) |
+| `coverage-gap` | Audit AC vs existing tests → uncovered/missing/redundant + cases to add |
 | `explore-app` | Discover real selectors/routes via the Playwright MCP → navigation memory |
 | `automation-generate` | Test cases (detailed, or summary→explore) → code (ui / api / perf) |
 | `run-tests` | Run by surface / marker / env (+ reruns), local or Jenkins |
 | `read-report` | Analyze output, AI failure analysis + fixes, HTML + Allure |
+| `create-bug` | Failed test / defect → deduped, well-formed Jira bug linked to the story |
 | `publish-testcases` | Approved JSON cases → Excel / Xray / TestRail + attach story + status |
 | `review-code` | Strict convention review + guard / lint / type gates |
 | `flaky-triage` | Detect / confirm / quarantine flaky tests + memory |
 
-Typical flow: `setup` → `mcp-setup` → `user-story-test` (or `explore-app` →
-`automation-generate`) → `run-tests` → `read-report` → `review-code`.
-`publish-testcases` exports already-approved cases on its own; `flaky-triage` as needed.
+Typical flow: `setup` → `mcp-setup` → `create-test-cases` (or `user-story-test` for the
+full end-to-end run) → `automation-generate` → `run-tests` → `read-report` → `review-code`.
+`coverage-gap` finds what's missing; `publish-testcases` exports approved cases;
+`create-bug` files a defect; `flaky-triage` handles flaky tests.
 
 ## First time
 1. `uv sync --extra all --extra dev` (or only the surfaces you need, e.g. `--extra api`)
