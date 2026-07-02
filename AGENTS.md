@@ -25,6 +25,28 @@ publish to the client's chosen test management (open **Excel** / **Xray** /
 duplicate) → run all → deliver an HTML report + update statuses. Per-module AI
 memory lives in `docs/ai/<module>/`.
 
+## Skills catalogue
+Reusable skills live in `.claude/skills/<name>/SKILL.md` (Claude Code auto-discovers
+them) and are mirrored at `.agents/skills/<name>/` for Codex / other tools. To use one,
+load its `SKILL.md` and follow it.
+
+| Skill | When to use |
+|-------|-------------|
+| `setup` | First-time onboarding: extras, browsers, gRPC stubs, env, `authenticate()`, doctor |
+| `mcp-setup` | Connect Jira / Figma / Playwright / TestRail MCPs (guided) |
+| `user-story-test` | A Jira story key/URL (or pasted AC) → run the full qa-agent workflow |
+| `qa-agent` | The full engine: design → approve → publish → generate → run → report |
+| `explore-app` | Discover real selectors/routes via the Playwright MCP → navigation memory |
+| `automation-generate` | Test cases (detailed, or summary→explore) → code (ui / api / perf) |
+| `run-tests` | Run by surface / marker / env (+ reruns), local or Jenkins |
+| `read-report` | Analyze output, AI failure analysis + fixes, HTML + Allure |
+| `review-code` | Strict convention review + guard / lint / type gates |
+| `flaky-triage` | Detect / confirm / quarantine flaky tests + memory |
+
+Typical flow: `setup` → `mcp-setup` → `user-story-test` (or `explore-app` →
+`automation-generate`) → `run-tests` → `read-report` → `review-code`; `flaky-triage`
+as needed.
+
 ## First time
 1. `uv sync --extra all --extra dev` (or only the surfaces you need, e.g. `--extra api`)
    · `uv run playwright install --with-deps chromium` (ui) · `uv run poe proto-gen` (grpc).
