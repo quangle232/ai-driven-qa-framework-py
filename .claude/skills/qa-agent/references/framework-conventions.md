@@ -36,6 +36,9 @@ tests/  ui/ (+ ui/mobile_web) · api/{rest,grpc,graphql} · performance/ · mobi
   and performance are skip-gated (`ALLOW_MOBILE_NATIVE` / `ALLOW_PERF`).
 - Respect the patch guard (`uv run aiqa guard --files`); comments in English; per-module
   AI memory lives in `docs/ai/<module>/`.
+- **Test data lifecycle** — seed preconditions via the API, exercise the UI, and always
+  tear down created data via the API (track ids). When the create itself is under test,
+  create via the UI but still clean up via the API (`modules/ui/conventions.md`).
 
 ## Skills (agents)
 Reusable skills orchestrate this framework for users — full catalogue in `AGENTS.md`

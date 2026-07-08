@@ -46,3 +46,7 @@ removal (`duplicateStatus != "duplicate"`).
 - A missing feature marker needs `shared/config/tags.py` + `pyproject.toml` (both
   patch-guarded) — ask the user; reuse the closest marker meanwhile.
 - Validate each file with `uv run aiqa guard --files <paths>` before finalising.
+- **Emit setup + teardown per the data lifecycle** (`modules/ui/conventions.md`): create
+  precondition data via an API service / `api_support.py`; add a `yield` / `finally`
+  teardown that deletes every created id via the API. When the UI create is the case
+  under test, still track the id and tear down via the API.

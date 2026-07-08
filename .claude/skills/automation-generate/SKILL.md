@@ -28,6 +28,10 @@ Follow `.claude/skills/qa-agent/references/test-case-template.md` (JSON→pytest
   plan; assert SLOs with `modules.performance.helpers.assert_thresholds`; spec in
   `tests/performance/` (skip-gated by `ALLOW_PERF`).
 - Decorate `@tags(...)` + `@jira("KEY")`; keep test data in `modules/<surface>/testdata/`.
+- **Setup + teardown (data lifecycle)** — seed preconditions via an API service /
+  `modules/ui/api_support.py`; emit a `yield` / `finally` teardown that deletes every
+  created id via the API (track ids). A UI-create case still tears down via the API. See
+  `modules/ui/conventions.md`.
 
 ## Validate + run
 - `uv run aiqa guard --files <generated>` must pass. A missing feature marker needs

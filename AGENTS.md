@@ -121,6 +121,9 @@ Isolation extras: `ui · api · grpc · graphql · mobile · perf · agent · re
   is the index.
 - `@bugs` = expected-fail (green slice `-m "not bugs"`); `mobile_native` + `performance`
   are skip-gated (`ALLOW_MOBILE_NATIVE` / `ALLOW_PERF`). Comments in English.
+- **Test data lifecycle** — seed preconditions via the API, test through the UI, and
+  always tear down created data via the API (track ids); a UI-create case creates via the
+  UI but still cleans up via the API. See `modules/ui/conventions.md`.
 - Respect the patch guard (`uv run aiqa guard --files`). Don't create accounts or type
   passwords; the user does those.
 

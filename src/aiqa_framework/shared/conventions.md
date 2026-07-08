@@ -14,6 +14,9 @@
 - Markers: a feature marker name == the Jira label (kebab→snake). Register new
   markers in `pyproject.toml` `[tool.pytest.ini_options]` (patch-guarded — the agent
   asks the user).
+- **Test data lifecycle**: seed preconditions via the **API** (not the UI); when the UI
+  create itself is under test, drive it via the UI but track the id(s); **always tear
+  down created data via the API** (`modules/ui/conventions.md`).
 - All comments in English.
 
 ## Per-module conventions

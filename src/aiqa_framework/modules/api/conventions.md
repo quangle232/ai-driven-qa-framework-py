@@ -19,6 +19,9 @@ Pure backend testing. This module must NOT import Playwright.
 - Tag specs: `@tags(TAGS.API|TAGS.GRPC|TAGS.GRAPHQL, TAGS.REGRESSION, TAGS.P0/1/2)`
   + `@jira("KEY")`.
 - Test data in `modules/api/testdata/` (or per sub-surface); not inline.
+- API services double as the **setup / teardown** layer for other surfaces — UI / mobile
+  tests seed preconditions and clean up through these services (or `ui/api_support.py`).
+  Keep create + delete symmetric so teardown is reliable (see `modules/ui/conventions.md`).
 - Load performance testing from `modules/performance`, not here.
 
 ## Run in isolation

@@ -33,6 +33,14 @@ happy · negative · edge · boundary · adhoc · blackbox · api · data · sec
   so STEP 14 can convert them to pytest cleanly.
 - Every test case should map to at least one AC whenever possible.
 
+## CRUD & data lifecycle
+- For a CRUD feature, cover **Create · Read/List/Search · Update · Delete** (each with a
+  happy + a negative case).
+- Every case that creates or needs data follows the data lifecycle: **precondition data
+  via the API**, action under test, **teardown via the API**, ids tracked. When the UI
+  create itself is under test, create via the UI but still clean up via the API. See
+  `src/aiqa_framework/modules/ui/conventions.md`.
+
 ## Surface mapping (this framework)
 A case targets one surface; this drives the generated pytest later:
 - UI flow → `tests/ui/` (`TAGS.REGRESSION`)
