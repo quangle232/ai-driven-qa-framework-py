@@ -36,22 +36,21 @@ Tests own their data and clean up after themselves — via the **API**, not the 
   (`modules/api/rest/services/`) or `modules/ui/api_support.py`; don't duplicate.
 - **Isolate per test** (unique names / seeds) so parallel / shared-SUT runs don't collide.
 
-```python
-@pytest.fixture
-def cleanup(api):                          # UiApiSupport or an API service
-    created: list[str] = []
-    yield created
-    for item_id in created:
-        api.delete(f"/items/{item_id}")    # teardown via API
+Shared fixtures do the plumbing: `cleanup` (`tests/conftest.py` → `CleanupTracker`,
+LIFO teardown, runs pass-or-fail) and `api` (`tests/ui/conftest.py` → `UiApiSupport`
+over `page.request`). Full example: the qa-agent skill's
+`examples/sample_lifecycle_spec.py`; runnable API version:
+`tests/api/rest/test_sample_lifecycle.py`.
 
-def test_create_item(page, cleanup):       # CREATE under test → via the UI
+```python
+def test_create_item(page, api, cleanup):        # CREATE under test → via the UI
     item = ItemPage(page)
     item.create("Widget A")
-    cleanup.append(item.created_id())      # track id for API teardown
+    cleanup.add(api.delete, f"/items/{item.created_id()}")   # teardown via API
 
-def test_search_item(page, api, cleanup):  # precondition via API, action via UI
+def test_search_item(page, api, cleanup):        # precondition via API, action via UI
     item_id = api.post_json("/items", {"name": "Widget B"})["id"]
-    cleanup.append(item_id)
+    cleanup.add(api.delete, f"/items/{item_id}")
     SearchPage(page).search("Widget B").expect_row(item_id)
 ```
 

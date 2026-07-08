@@ -47,6 +47,8 @@ removal (`duplicateStatus != "duplicate"`).
   patch-guarded) — ask the user; reuse the closest marker meanwhile.
 - Validate each file with `uv run aiqa guard --files <paths>` before finalising.
 - **Emit setup + teardown per the data lifecycle** (`modules/ui/conventions.md`): create
-  precondition data via an API service / `api_support.py`; add a `yield` / `finally`
-  teardown that deletes every created id via the API. When the UI create is the case
-  under test, still track the id and tear down via the API.
+  precondition data via an API service / `api_support.py`, and register every created id
+  with the shared `cleanup` fixture (`tests/conftest.py`) so teardown deletes it via the
+  API. When the UI create is the case under test, still track the id and tear down via
+  the API. Examples: `../examples/sample_lifecycle_spec.py` (UI) and
+  `tests/api/rest/test_sample_lifecycle.py` (runnable).

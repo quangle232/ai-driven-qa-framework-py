@@ -29,9 +29,11 @@ Follow `.claude/skills/qa-agent/references/test-case-template.md` (JSON→pytest
   `tests/performance/` (skip-gated by `ALLOW_PERF`).
 - Decorate `@tags(...)` + `@jira("KEY")`; keep test data in `modules/<surface>/testdata/`.
 - **Setup + teardown (data lifecycle)** — seed preconditions via an API service /
-  `modules/ui/api_support.py`; emit a `yield` / `finally` teardown that deletes every
-  created id via the API (track ids). A UI-create case still tears down via the API. See
-  `modules/ui/conventions.md`.
+  `modules/ui/api_support.py`; register every created id with the shared `cleanup`
+  fixture (`tests/conftest.py`, + the `api` fixture in `tests/ui/conftest.py`) so
+  teardown deletes it via the API. A UI-create case still tears down via the API.
+  Pattern: `qa-agent/examples/sample_lifecycle_spec.py`; runnable:
+  `tests/api/rest/test_sample_lifecycle.py`.
 
 ## Validate + run
 - `uv run aiqa guard --files <generated>` must pass. A missing feature marker needs
