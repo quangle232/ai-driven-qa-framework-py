@@ -210,10 +210,12 @@ push, and open the MR automatically — no second confirmation.
   notes (guard exceptions, deviations, known defects).
 - Branch naming (team rule): **`test/<STORY-KEY>-<feature-slug>`**; runs without a
   story (gen-auto-test standalone): `test/manual-<slug>-<YYYYMMDD>`.
-- MR via `scripts/create_gitlab_mr.py` (GitLab adapter — config from
-  `GITLAB_URL`/`GITLAB_TOKEN`/`GITLAB_PROJECT_ID` or `environments/.env.gitlab`;
-  other providers can follow the same contract). If the repo has no remote,
-  report "branch+MR skipped — repo not bootstrapped" and continue.
+- MR/PR via `scripts/create_mr.py` — **multi-provider**: GitLab · GitHub (incl.
+  Enterprise) · Bitbucket Cloud · Azure DevOps · Gitea/Forgejo. The provider and
+  repo are auto-detected from the `origin` remote; override with `--provider` /
+  `GIT_PROVIDER`. Tokens from env or `environments/.env.git` (see
+  `.env.git.example`); `--dry-run` previews the request. If the repo has no
+  remote, report "branch+MR skipped — repo not bootstrapped" and continue.
 
 ## STEP 16 — Update statuses + report back *(automation half)*
 - Write results back into the JSON: per case set `testResult`

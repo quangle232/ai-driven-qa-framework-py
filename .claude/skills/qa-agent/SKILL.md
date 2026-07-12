@@ -43,7 +43,7 @@ Scripts:
 - `./scripts/export_json_to_excel.py` — open Excel export, AFTER approval only.
 - `./scripts/attach_file_to_jira.py` — attach xlsx/HTML to the parent story (the
   Atlassian MCP has no upload tool); ONE results-Excel upload, post-execution.
-- `./scripts/create_gitlab_mr.py` — open the MR for the pushed `test/...` branch
+- `./scripts/create_mr.py` — open the MR for the pushed `test/...` branch
   (STEP 15.5 ship gate).
 - `./scripts/find_related_tests.py` / `./scripts/trigger_jenkins.py` — related-test
   discovery + CI execution in the automation half.
