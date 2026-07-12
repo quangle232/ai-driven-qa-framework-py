@@ -29,7 +29,7 @@ uv run aiqa doctor       # health check
 ```
 
 ## Skills (drive it with an agent)
-21 reusable skills run the framework via Claude Code (`.claude/skills/`) or Codex
+22 reusable skills run the framework via Claude Code (`.claude/skills/`) or Codex
 (`.agents/skills/`) — just ask the agent. Start with `setup`, then `user-story-test` /
 `create-test-cases` → `automation-generate` → `run-tests` → `read-report`. Full catalogue
 in `README.md` / `AGENTS.md`.

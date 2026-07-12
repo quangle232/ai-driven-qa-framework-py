@@ -42,6 +42,7 @@ Each test case supports:
 - `duplicateReason`
 - `acIds` (e.g. `["AC1"]`)
 - `automatable` (`true` / `false`) — drives STEP 14
+- `coverageType` (`happy` / `negative` / `edge` — drives the STEP 5 coverage matrix)
 - `surface` (`ui` / `api` / `grpc` / `mobile_web` / `mobile_native`) — drives STEP 14
 - `specFile` — set in STEP 14 once the pytest file is generated
 - `xrayKey` — set when published to Xray (STEP 13)

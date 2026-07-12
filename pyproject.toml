@@ -10,6 +10,7 @@ dependencies = [
     "pytest>=8.3",
     "pytest-xdist>=3.6",
     "pytest-rerunfailures>=14.0",
+    "pytest-repeat>=0.9",
     "pytest-json-report>=1.5",
     "pydantic>=2.9",
     "pydantic-settings>=2.5",
@@ -88,6 +89,7 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 # Embedded HTML/Jinja template — long lines are intentional.
 "src/aiqa_framework/agent/reports/stakeholder_html.py" = ["E501"]
+"src/aiqa_framework/shared/reporting/bug_draft_writer.py" = ["E501"]
 # Illustrative skill examples (import a not-yet-generated module).
 ".claude/skills/qa-agent/examples/*.py" = ["I001"]
 
@@ -120,6 +122,7 @@ test = "pytest"
 "grpc-mock" = "python -m aiqa_framework.modules.api.grpc.mock_server"
 "proto-gen" = "python -m grpc_tools.protoc -I src/aiqa_framework/modules/api/grpc/proto/casino --python_out=src/aiqa_framework/modules/api/grpc/generated --grpc_python_out=src/aiqa_framework/modules/api/grpc/generated --pyi_out=src/aiqa_framework/modules/api/grpc/generated src/aiqa_framework/modules/api/grpc/proto/casino/game.proto"
 "report-all" = "aiqa report-all"
+"bug-drafts-index" = "python -m aiqa_framework.shared.reporting.ensure_bug_drafts_index"
 lint = "ruff check ."
 format = "ruff format ."
 typecheck = "mypy src"

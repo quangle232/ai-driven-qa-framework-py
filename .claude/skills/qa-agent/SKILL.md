@@ -41,6 +41,10 @@ Scripts:
 - `./scripts/json_quality_checks.py` — enrich JSON with priority + duplicate flags
   (STEP 7) BEFORE presenting / syncing the table.
 - `./scripts/export_json_to_excel.py` — open Excel export, AFTER approval only.
+- `./scripts/attach_file_to_jira.py` — attach xlsx/HTML to the parent story (the
+  Atlassian MCP has no upload tool); ONE results-Excel upload, post-execution.
+- `./scripts/create_gitlab_mr.py` — open the MR for the pushed `test/...` branch
+  (STEP 15.5 ship gate).
 - `./scripts/find_related_tests.py` / `./scripts/trigger_jenkins.py` — related-test
   discovery + CI execution in the automation half.
 
@@ -86,7 +90,8 @@ instead, skip the Jira fetch and use note context. The automation half (STEP
 - **Never hard-fail** on Figma / Playwright / MCP errors — fall back and continue
   (`fallbacks.md`); for Jira / TestRail, run the guided setup first.
 - **Respect the patch guard** in the automation half (`uv run aiqa guard`); never
-  write a patch-guarded path (`shared/config/`, `pyproject.toml`, `conftest.py`, etc.) —
+  write a patch-guarded path (`shared/config/`, `pyproject.toml`, `conftest.py`, etc.;
+  the ONE exception: additive `TAGS` entries in `shared/config/tags.py`) —
   surface it to the user.
 - **`marker == Jira label`** (kebab→snake); JSON `priority` `P0/P1/P2` → marker
   `p0/p1/p2`.

@@ -52,6 +52,7 @@ load its `SKILL.md` and follow it.
 |-------|-------------|
 | `explore-app` | Discover real selectors/routes via the Playwright MCP → navigation memory |
 | `automation-generate` | Test cases (detailed, or summary→explore) → code (ui / api / perf) |
+| `gen-auto-test` | MANUAL cases (pasted / .xlsx / .md / .json, no Jira story) → explore vague steps live → code + 5/5 stress + branch/MR |
 | `data-factory` | Typed test-data builders (valid / boundary / invalid) in `testdata/` |
 
 **Run & analyze**

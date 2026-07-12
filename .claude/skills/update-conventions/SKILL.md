@@ -16,8 +16,9 @@ description: Safely evolve the framework's conventions and markers — edit shar
 ## Register a new marker
 - Add `NAME = pytest.mark.<name>` to `src/aiqa_framework/shared/config/tags.py` `TAGS` and
   a `"<name>: ..."` line to `pyproject.toml` `[tool.pytest.ini_options] markers`.
-- BOTH paths are **patch-guarded** — the agent cannot write them; prepare the exact diff
-  and ask the user to apply it. Then it's usable as `TAGS.NAME`.
+- `tags.py` is the ONE guarded file the patch guard allows (additive `TAGS` entries
+  only). `pyproject.toml` stays patch-guarded — prepare the exact diff and ask the
+  user to apply it (an unregistered marker only warns). Then it's usable as `TAGS.NAME`.
 
 ## Verify
 `uv run poe lint` + `uv run pytest --collect-only` (no unknown-marker warnings). If a

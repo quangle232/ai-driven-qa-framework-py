@@ -26,6 +26,13 @@ BLOCKED_PREFIXES = (
     ".git/",
 )
 
+# The ONE guarded file generated patches may touch: the marker == Jira label
+# convention requires adding a TAGS entry per new feature, and the code-gen
+# rules instruct exactly that. Additive and low-risk; the rest of
+# shared/config/ stays blocked above. (pyproject.toml marker registration is
+# still blocked — an unregistered marker only warns.)
+TAG_CATALOGUE = "src/aiqa_framework/shared/config/tags.py"
+
 _SECRET_RX = re.compile(
     r"(?:password|api[_-]?key|token|secret)\s*[:=]\s*[\"'][^\"']{6,}[\"']", re.IGNORECASE
 )
@@ -45,7 +52,7 @@ def guard_file(path: str, content: str) -> GuardResult:
     reasons: list[str] = []
     norm = path.replace("\\", "/").lstrip("./")
 
-    if any(norm.startswith(p) for p in BLOCKED_PREFIXES):
+    if norm != TAG_CATALOGUE and any(norm.startswith(p) for p in BLOCKED_PREFIXES):
         reasons.append(f"writes to a protected path ({norm})")
     if _SECRET_RX.search(content):
         reasons.append("hardcoded secret/credential literal")

@@ -20,9 +20,16 @@ uv run --with openpyxl python3 \
 ```
 The columns (`ID, Title, Feature, Sub-feature, Preconditions, Steps, Expected
 Result, Priority, Type, AC, Status, Bug ID, Notes`) import cleanly into Xray,
-TestRail, Zephyr, etc. Attach the file to the parent Jira user story (see
-`jira-sync.md`) and persist it to `docs/ai/testcases/`. STEP 16 re-exports with
-the `Status` / `Bug ID` columns filled.
+TestRail, Zephyr, etc. Persist it to `docs/ai/testcases/`.
+
+**Attach timing: exactly ONE upload, post-execution.** The approval-time export
+is a local review copy only. After execution, re-export with the results written
+back into the JSON, VERIFY the `Status` column is actually filled (a resultless
+sheet is a duplicate, not an artifact), and attach THAT file to the parent Jira
+user story (see `jira-sync.md`) via
+`.claude/skills/qa-agent/scripts/attach_file_to_jira.py` — the Atlassian MCP has
+no attachment-upload tool. Flows that end without execution attach the
+approval-time export instead.
 
 Use this when the client has no integrated tool, or wants to import the cases
 themselves.

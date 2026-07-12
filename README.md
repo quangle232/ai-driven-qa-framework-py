@@ -3,7 +3,7 @@
 A reusable, **modular** QA framework — each surface is its own installable module:
 **UI** (Playwright), **API** (REST / gRPC / GraphQL), **Performance** (Locust /
 JMeter), **Mobile** (Appium). Plus a failure → Jira-bug auto-reporter, an **AI QA
-Agent** (collect → diagnose → report), **21 reusable agent skills**, and **4 MCP
+Agent** (collect → diagnose → report), **22 reusable agent skills**, and **4 MCP
 servers** — all on one pytest runner. Works with **Claude Code and Codex**. Python
 port of the TypeScript framework.
 
@@ -63,7 +63,7 @@ then `uv run pytest -m <marker>` (or the module's README run-in-isolation block)
 
 ## AI skills (agents)
 
-21 reusable skills drive the framework. **Claude Code** auto-discovers them
+22 reusable skills drive the framework. **Claude Code** auto-discovers them
 (`.claude/skills/<name>/`); **Codex / Cursor / Gemini** read `.agents/skills/<name>/`
 (see `AGENTS.md`). Just ask the agent — e.g. "test EAST-123", "review this diff",
 "run the api tests".
@@ -81,6 +81,7 @@ then `uv run pytest -m <marker>` (or the module's README run-in-isolation block)
 | `coverage-gap` | Design & plan | Coverage audit | AC vs existing tests → uncovered / missing / redundant + cases to add |
 | `explore-app` | Build automation | Exploration · ui | Playwright MCP explores the SUT → selectors/routes → navigation memory |
 | `automation-generate` | Build automation | Code-gen · ui/api/perf | Cases (detailed, or summary → explore) → automation code |
+| `gen-auto-test` | Build automation | Manual → code | MANUAL cases (pasted / .xlsx / .md / .json, no story) → live-explore vague steps → code + 5/5 stress + branch/MR |
 | `data-factory` | Build automation | Test data | Typed builders (valid / boundary / invalid) in `testdata/` |
 | `run-tests` | Run & analyze | Execution | Run by surface / marker / env (+ reruns), local or Jenkins |
 | `contract-test` | Run & analyze | Contract · api | Schemathesis property/contract testing vs the OpenAPI schema |

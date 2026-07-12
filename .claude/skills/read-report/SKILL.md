@@ -35,5 +35,6 @@ allure generate test-output/allure-results -o test-output/allure-report --clean
 
 ## Notes
 - Read-only analysis: it suggests fixes but does not apply them — use `review-code` /
-  `automation-generate` to act, and `flaky-triage` for flaky tests. Auto-filed Jira
-  bugs come from the run itself (`shared/reporting/bug_reporter.py`).
+  `automation-generate` to act, and `flaky-triage` for flaky tests. Failures produce
+  approval-gated bug DRAFTS in `test-output/ai/bug-drafts/` (open `index.html` there;
+  file approved ones with `create-bug`); `JIRA_AUTO_BUG=yes` is the auto-file opt-in.

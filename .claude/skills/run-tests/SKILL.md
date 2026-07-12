@@ -15,6 +15,9 @@ description: Run AIQA tests by surface, marker, or tag with the right environmen
    - **Shared-SUT discipline**: for UI against a shared environment, run single-worker
      (`-n0`, or omit `-n auto`) with `--reruns 2` so parallel tests don't collide.
      Mock-backed API/gRPC/GraphQL are isolated and safe to parallelize (`-n auto`).
+   - **Headless by default (CI parity)**: pytest-playwright runs headless unless
+     `--headed` is passed — that default IS the CI mode. Run headed ONLY when the
+     user explicitly asks for it; never add `--headed` for generated cases.
 3. **Related existing tests**: `python3 .claude/skills/qa-agent/scripts/find_related_tests.py <marker>`.
    CI option: `python3 .claude/skills/qa-agent/scripts/trigger_jenkins.py "<markers>" --no-wait`
    then `--status=<build-url>` (see `references/jenkins-trigger.md`).

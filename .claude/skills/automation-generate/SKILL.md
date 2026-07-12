@@ -36,9 +36,13 @@ Follow `.claude/skills/qa-agent/references/test-case-template.md` (JSON→pytest
   `tests/api/rest/test_sample_lifecycle.py`.
 
 ## Validate + run
-- `uv run aiqa guard --files <generated>` must pass. A missing feature marker needs
-  `shared/config/tags.py` + `pyproject.toml` (both patch-guarded) → ask the user; reuse
-  the closest marker meanwhile.
-- Run: `uv run pytest -m "<marker>"` (perf: `ALLOW_PERF=1 ...`), then hand off to
-  `read-report`.
+- `uv run aiqa guard --files <generated>` must pass. A missing feature marker may be
+  ADDED to `shared/config/tags.py` (the one guarded file the guard allows — additive
+  `TAGS` entries); registering it in `pyproject.toml` markers still asks the user.
+- Run **headless** (pytest-playwright's default — never `--headed` for generated
+  cases): `uv run pytest -m "<marker>"` (perf: `ALLOW_PERF=1 ...`).
+- **Stress gate:** every NEW case must pass
+  `uv run pytest "<nodeid>" --count=5 --json-report-file=test-output/stress-report.json`
+  (5/5 green; serial on a shared SUT) before it is presented as done. Then hand off to
+  `read-report`. Ship via branch + MR per qa-agent STEP 15.5.
 - Update `docs/ai/<module>/` (memory + test-case + navigation).

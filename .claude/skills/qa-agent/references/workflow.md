@@ -61,6 +61,18 @@ review-sync target. On failure → story comment → note context. Never block.
 ## STEP 5 — QA analysis
 Output: feature scope, main flow, validations, risks, assumptions, open questions.
 
+**Coverage matrix is mandatory** for the generated set: `{happy, negative, edge}`
+× the story's surfaces (`ui`, `api`, …, optional `performance` / `security`).
+Every cell is covered by a case, turned into a new case, or an explicit N/A with
+an honest reason — the matrix is shown in the STEP 8 review. Set `coverageType`
+on each case (`json-contract.md`).
+
+**Impacted-flow analysis** — the second context: from the story, name the
+surfaces the change touches (endpoints/response shapes, pages/components, shared
+code); map them to existing flows via the tracking files and the existing-code
+index. Covered impacted flows JOIN the STEP 15 execution; uncovered ones become
+new cases. The list (flow, spec or NEW, reason, risk) is part of the STEP 8 review.
+
 ## STEP 6 — Generate JSON-first test cases
 Generate cases into canonical JSON first per `json-contract.md`. The preview table
 is NEVER the source of truth. Cover all surfaces the story touches (UI / API /
@@ -113,8 +125,12 @@ Ask the client which target they want (default **Excel**); record it in
 `meta.testManagement`. See `test-management.md`.
 - **Excel (open / default)** — `scripts/export_json_to_excel.py` (see
   `python-export-runner.md`) → `test-output/qa/TestCases_<feature>.xlsx`; persist to
-  `docs/ai/testcases/` and attach to the **parent Jira user story only** (never a
-  subtask). If direct attach is unsupported, comment the path on the story.
+  `docs/ai/testcases/`. **This export is a LOCAL review copy — do NOT attach it to
+  Jira yet.** Jira gets exactly ONE Excel upload (STEP 16): the post-execution
+  re-export with the `Status` column verified filled — never a resultless
+  duplicate. (Flows that end without execution attach this approval-time file
+  instead.) Attach to the **parent Jira user story only** (never a subtask) via
+  `scripts/attach_file_to_jira.py` — the Atlassian MCP has no upload tool.
 - **Xray** — create Jira `Test` issues from the approved JSON via the Jira MCP;
   store each `xrayKey` back into the case.
 - **TestRail** — create cases + a run via the TestRail MCP (needs config; guided
@@ -123,6 +139,9 @@ Ask the client which target they want (default **Excel**); record it in
 ---
 
 ## STEP 14 — Generate Playwright/pytest from approved cases *(automation half)*
+Code generation is shared with the **`gen-auto-test`** skill
+(`../../gen-auto-test/SKILL.md`) — the manual-cases entry point delegates HERE
+once its cases are normalized, and this step follows the same engine rules.
 For each approved case where `automatable` is true / `duplicateStatus` is not a
 removal, turn the manual JSON case into runnable pytest per
 `framework-conventions.md` and `test-case-template.md` (the JSON↔pytest mapping):
@@ -143,32 +162,74 @@ removal, turn the manual JSON case into runnable pytest per
   become the spec body steps; `summaryPrecondition` informs fixtures.
 - New shared keywords go INTO the surface keyword layer — never call the transport
   directly in a spec. Reuse existing modules/ui/pages/services/screens.
-- A new feature marker needs `shared/config/tags.py` + `pyproject.toml`, both
-  **patch-guarded** → ask the user (see `jira-sync.md`); reuse the closest marker
-  meanwhile.
+- A new feature marker may be **added to `shared/config/tags.py`** — the ONE
+  guarded file the patch guard allows (additive `TAGS` entries only; the marker ==
+  Jira label convention requires one per feature). Registering it in
+  `pyproject.toml` `[tool.pytest.ini_options] markers` is still patch-guarded →
+  ask the user (an unregistered marker only warns meanwhile).
 - Validate every generated file with `uv run aiqa guard --files <paths>` before
   finalising (rejects guarded paths, secrets, `time.sleep`, skips, raw
   `playwright.sync_api` imports in specs).
 
-## STEP 15 — Execute all *(automation half)*
+## STEP 15 — Execute all + STRESS gate *(automation half)*
+- **STRICT HEADLESS:** every run of newly generated cases — first run, re-runs,
+  stress — is headless (pytest-playwright's default and the exact mode CI uses).
+  Never pass `--headed` in the generation pipeline; a test that only passes
+  headed is not done.
 - New cases locally (fast): `uv run pytest -m "<markers>"` (or
   `uv run poe test-api | test-grpc | test-mobile-web | test-mobile-native`).
-- Related existing tests: `python3 scripts/find_related_tests.py <marker>` then
-  run them too. Optionally on CI:
-  `python3 scripts/trigger_jenkins.py "<markers>" --no-wait` and check later with
-  `--status=<build-url>` (see `jenkins-trigger.md`).
+- Related existing tests **and impacted flows** (STEP 5 list):
+  `python3 scripts/find_related_tests.py <marker>` then run them too. Optionally
+  on CI: `python3 scripts/trigger_jenkins.py "<markers>" --no-wait` and check
+  later with `--status=<build-url>` (see `jenkins-trigger.md`).
 - "Execute all" = the newly generated cases **and** the related existing cases for
   the story's marker(s).
+- **FINALIZE order — freeze the report BEFORE stress** so repeats never inflate
+  it: run the new cases once → `uv run aiqa report-all` (and any Allure artifact)
+  → only then stress.
+- **STRESS gate — mandatory for every NEW auto case:** re-run it with
+  `uv run pytest "<nodeid>" --count=5 --json-report-file=test-output/stress-report.json`
+  (pytest-repeat; the redirected report file keeps the frozen run report intact).
+  **All 5 repeats must pass** before the test counts as done; any failed repeat =
+  flakiness — fix the test-side cause and re-stress. Workers: serial on a shared
+  SUT (the default — no `-n`); `-n 3` max only when the target tolerates parallel.
+  Entity-creating specs: the `cleanup` teardown runs per repeat — verify no
+  leftovers accumulate. Report stress as a markdown summary table (case | repeats
+  | result | duration) in the review, the MR description, and a Jira comment on
+  the parent story.
+
+## STEP 15.5 — ⏸ Review scripts + results → branch is AUTOMATIC on approval
+Present for human review with clickable file links: every generated file (a
+one-line plain-English summary + `git diff --stat`), the run AND stress results
+(the 5/5 table), the finalize artifact links. **That approval IS the
+authorization to ship**: create the branch, commit ONLY the generated files,
+push, and open the MR automatically — no second confirmation.
+- **MR description — review best-practice**, 5 fixed sections: (1) what changed —
+  every file Added/Changed with a one-line purpose; (2) new-case execution summary
+  table; (3) stress summary table (5/5); (4) artifacts & Jira links; (5) reviewer
+  notes (guard exceptions, deviations, known defects).
+- Branch naming (team rule): **`test/<STORY-KEY>-<feature-slug>`**; runs without a
+  story (gen-auto-test standalone): `test/manual-<slug>-<YYYYMMDD>`.
+- MR via `scripts/create_gitlab_mr.py` (GitLab adapter — config from
+  `GITLAB_URL`/`GITLAB_TOKEN`/`GITLAB_PROJECT_ID` or `environments/.env.gitlab`;
+  other providers can follow the same contract). If the repo has no remote,
+  report "branch+MR skipped — repo not bootstrapped" and continue.
 
 ## STEP 16 — Update statuses + report back *(automation half)*
 - Write results back into the JSON: per case set `testResult`
-  (Passed/Failed/Skipped) and `bugId` if a defect was filed (the framework's
-  `shared/reporting/bug_reporter.py` auto-files a Jira bug on the final failed attempt for
-  `@jira` specs). Re-persist the JSON.
+  (Passed/Failed/Skipped) and `bugId` if a defect was filed. Re-persist the JSON.
+- **Bug policy:** a final-attempt failure writes an approval-gated **DRAFT**
+  (`test-output/ai/bug-drafts/` — JSON + self-contained HTML with repro command
+  and embedded screenshots; root conftest gate). File a bug via the Jira MCP ONLY
+  for drafts the user explicitly approves. `JIRA_AUTO_BUG=yes` is the explicit
+  opt-in for direct auto-filing. Ensure the drafts index exists even when green:
+  `uv run python -m aiqa_framework.shared.reporting.ensure_bug_drafts_index`.
 - **Update statuses on the chosen test-management server** (see
-  `test-management.md`): Excel → re-export with `Status`/`Bug ID` filled; Xray →
-  create a `Test Execution` and set each test PASS/FAIL; TestRail → add results to
-  the run.
+  `test-management.md`): Excel → re-export with `Status`/`Bug ID` filled (VERIFY
+  the column is filled — a resultless sheet is a duplicate, not an artifact) and
+  attach it to the parent story via `scripts/attach_file_to_jira.py` — this is
+  the ONE Excel upload; Xray → create a `Test Execution` and set each test
+  PASS/FAIL; TestRail → add results to the run.
 - **Deliver the HTML execution report to the user**: `uv run aiqa report-all` →
   `test-output/ai/` (stakeholder HTML); surface the path/link to the user.
 - Update `docs/ai/`: `test-case.md` statuses, `memory.md` "Run history",
@@ -192,5 +253,16 @@ removal, turn the manual JSON case into runnable pytest per
 - **Persist JSON + Excel to `docs/ai/`** whenever generated, even if Jira is up.
 - **One primary review table** — no derived/summary/analytics tables anywhere.
 - **Respect the patch guard** in the automation half; surface guarded edits to the
-  user, never write them.
+  user, never write them (`shared/config/tags.py` is the one allowed exception —
+  additive `TAGS` entries).
+- **New tests must be 5/5 stress-green** (`--count=5`, headless, serial on a
+  shared SUT) before they are presented as done.
+- **STRICT HEADLESS for generated cases** — never `--headed` in the generation
+  pipeline; a test that only passes headed is not done.
+- **Bugs are never auto-filed** — failures write drafts that wait for human
+  approval (`JIRA_AUTO_BUG=yes` is the explicit opt-in).
+- **Generated code ships via branch + MR only** (`test/<STORY-KEY>-<slug>`),
+  auto-created by the STEP 15.5 approval — never straight to the default branch.
+- **Presentation rules:** every approval gate and results summary lists the
+  related files as clickable links with one-line plain-English summaries.
 - All comments in English; update `docs/ai/` after every enrichment, edit, and run.

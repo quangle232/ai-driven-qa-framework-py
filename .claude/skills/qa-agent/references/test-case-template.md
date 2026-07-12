@@ -43,8 +43,10 @@ removal (`duplicateStatus != "duplicate"`).
 - New shared keywords go INTO the surface keyword layer — never call the transport
   directly in a spec.
 - Reuse existing pages / services / screens before generating new ones.
-- A missing feature marker needs `shared/config/tags.py` + `pyproject.toml` (both
-  patch-guarded) — ask the user; reuse the closest marker meanwhile.
+- A missing feature marker may be ADDED to `shared/config/tags.py` (the one
+  guarded file the patch guard allows — additive `TAGS` entries only).
+  Registering it in `pyproject.toml` markers is still patch-guarded — ask the
+  user (an unregistered marker only warns meanwhile).
 - Validate each file with `uv run aiqa guard --files <paths>` before finalising.
 - **Emit setup + teardown per the data lifecycle** (`modules/ui/conventions.md`): create
   precondition data via an API service / `api_support.py`, and register every created id
