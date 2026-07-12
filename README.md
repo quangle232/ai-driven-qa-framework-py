@@ -2,16 +2,17 @@
 
 A reusable, **modular** QA framework — each surface is its own installable module:
 **UI** (Playwright), **API** (REST / gRPC / GraphQL), **Performance** (Locust /
-JMeter), **Mobile** (Appium). Plus a failure → Jira-bug auto-reporter, an **AI QA
-Agent** (collect → diagnose → report), **22 reusable agent skills**, and **4 MCP
-servers** — all on one pytest runner. Works with **Claude Code and Codex**. Python
-port of the TypeScript framework.
+JMeter), **Mobile** (Appium). Plus approval-gated **bug drafts** (a failure writes a
+reviewable draft, never an unreviewed Jira bug — `JIRA_AUTO_BUG=yes` opts into
+auto-filing), an **AI QA Agent** (collect → diagnose → report), **22 reusable agent
+skills**, and **4 MCP servers** — all on one pytest runner. Works with **Claude Code
+and Codex**. Python port of the TypeScript framework.
 
 > Sample-driven starter. Search for `sample` to find placeholders to replace.
 
 ## Stack
 
-`uv` · `pytest` (+ `pytest-xdist`, `pytest-rerunfailures`, `pytest-playwright`) ·
+`uv` · `pytest` (+ `pytest-xdist`, `pytest-rerunfailures`, `pytest-repeat`, `pytest-playwright`) ·
 `httpx` + `pydantic` + `respx` + `FastAPI` (API & mocks) · `grpcio` +
 `grpcio-tools` + `pytest-grpc` (gRPC) · `Appium-Python-Client` (native mobile) ·
 `locust` (performance) ·
@@ -105,5 +106,10 @@ per-skill descriptions in `AGENTS.md`.
 - `@bugs` = currently-broken (expected to fail); green slice `-m "not bugs"`.
 - Native-mobile specs are skip-gated (`ALLOW_MOBILE_NATIVE=1`).
 - Validate API responses with pydantic; assert gRPC **status codes**, not just payloads.
+- A final-attempt failure writes an approval-gated **bug draft**
+  (`test-output/ai/bug-drafts/`, JSON + self-contained HTML) — never an unreviewed
+  Jira bug; `JIRA_AUTO_BUG=yes` opts into auto-filing.
+- New generated tests must pass a **5/5 stress gate** (`--count=5`, headless) and ship
+  via **branch + MR** (`create_mr.py` — GitLab/GitHub/Bitbucket/Azure/Gitea).
 
 See `INSTALL.md`, `CLAUDE.md`, and the per-area docstrings. MIT licensed.

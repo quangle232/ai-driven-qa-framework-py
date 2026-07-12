@@ -7,8 +7,10 @@ the single source of truth.
 
 AIQA is a modular QA framework: each testing **surface** is a self-contained,
 isolable module (its own conventions, memory, helpers, tests, and optional-
-dependency extra), plus a failure → Jira-bug reporter, an AI **qa-agent** skill, the
-**`aiqa`** CLI, and 4 read-only MCP servers.
+dependency extra), plus approval-gated **bug drafts** (a failure writes a reviewable
+draft to `test-output/ai/bug-drafts/`, never an unreviewed Jira bug —
+`JIRA_AUTO_BUG=yes` opts into auto-filing), an AI **qa-agent** skill, the **`aiqa`**
+CLI, and 4 read-only MCP servers.
 
 ## Using this repo with an AI agent
 To turn a Jira story, pasted acceptance criteria, or an issue note into tests, load
@@ -18,12 +20,14 @@ the **qa-agent skill** and follow it end to end:
 - **Codex / other tools** — read `.agents/skills/qa-agent/SKILL.md` (same content)
   and follow `SKILL.md` + its `references/*.md` in order.
 
-The skill's flow: design JSON-first test cases → enrich (testing strategy, auto
-priority, duplicate detection) → review table + **human approval** (`I approve`) →
-publish to the client's chosen test management (open **Excel** / **Xray** /
-**TestRail**) → generate Playwright/pytest from the approved cases (reuse, don't
-duplicate) → run all → deliver an HTML report + update statuses. Per-module AI
-memory lives in `docs/ai/<module>/`.
+The skill's flow: design JSON-first test cases (coverage matrix + impacted-flow
+analysis) → enrich (testing strategy, auto priority, duplicate detection) → review
+table + **human approval** (`I approve`) → publish to the client's chosen test
+management (open **Excel** / **Xray** / **TestRail**) → generate Playwright/pytest
+from the approved cases (reuse, don't duplicate) → run all headless + **5/5 stress
+gate** → scripts+results review whose approval ships **branch + MR** → deliver an
+HTML report + update statuses (ONE results-Excel upload). Failures become
+approval-gated bug drafts. Per-module AI memory lives in `docs/ai/<module>/`.
 
 ## Skills catalogue
 Reusable skills live in `.claude/skills/<name>/SKILL.md` (Claude Code auto-discovers
@@ -125,8 +129,12 @@ Isolation extras: `ui · api · grpc · graphql · mobile · perf · agent · re
 - **Test data lifecycle** — seed preconditions via the API, test through the UI, and
   always tear down created data via the API (track ids); a UI-create case creates via the
   UI but still cleans up via the API. See `modules/ui/conventions.md`.
-- Respect the patch guard (`uv run aiqa guard --files`). Don't create accounts or type
+- Respect the patch guard (`uv run aiqa guard --files`; the one allowed exception is
+  additive `TAGS` entries in `shared/config/tags.py`). Don't create accounts or type
   passwords; the user does those.
+- Failures write approval-gated **bug drafts** (`test-output/ai/bug-drafts/`);
+  `JIRA_AUTO_BUG=yes` opts into auto-filing. New generated tests: headless only,
+  **5/5 stress** (`--count=5`), ship via **branch + MR** (`create_mr.py`).
 
 ## AI QA Agent CLI (`aiqa`) + MCP
 - `aiqa collect → diagnose → finalize → report-html` — deterministic pipeline over

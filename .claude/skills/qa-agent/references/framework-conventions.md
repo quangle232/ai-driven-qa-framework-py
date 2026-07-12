@@ -34,8 +34,12 @@ tests/  ui/ (+ ui/mobile_web) · api/{rest,grpc,graphql} · performance/ · mobi
   `uv run pytest -m <marker>` (see the module's `README.md`).
 - Validate API with pydantic; assert gRPC `StatusCode.*`; assert perf SLOs. Native-mobile
   and performance are skip-gated (`ALLOW_MOBILE_NATIVE` / `ALLOW_PERF`).
-- Respect the patch guard (`uv run aiqa guard --files`); comments in English; per-module
+- Respect the patch guard (`uv run aiqa guard --files`; the one allowed exception is
+  additive `TAGS` entries in `shared/config/tags.py`); comments in English; per-module
   AI memory lives in `docs/ai/<module>/`.
+- **Failure → bug drafts** (`test-output/ai/bug-drafts/`), never unreviewed Jira bugs
+  (`JIRA_AUTO_BUG=yes` opts in). New generated tests: headless only, 5/5 stress
+  (`--count=5`), ship via branch + MR (`create_mr.py`).
 - **Test data lifecycle** — seed preconditions via the API, exercise the UI, and always
   tear down created data via the API (track ids). When the create itself is under test,
   create via the UI but still clean up via the API (`modules/ui/conventions.md`).

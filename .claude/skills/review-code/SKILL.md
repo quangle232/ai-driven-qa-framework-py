@@ -19,6 +19,8 @@ Default = staged diff (`git diff --staged`); otherwise the files / PR the user n
 ## Deterministic gates (run + report)
 - `uv run aiqa guard --files <changed .py>` — patch guard (blocked paths, hardcoded
   secrets, `time.sleep`, `pytest.mark.skip`, raw `playwright.sync_api` import in a spec).
+  The one allowed guarded file is `shared/config/tags.py` — and ONLY additive `TAGS`
+  entries; flag anything else in it.
 - `uv run poe lint` (ruff) and `uv run poe typecheck` (mypy).
 
 ## Convention checklist (strict)

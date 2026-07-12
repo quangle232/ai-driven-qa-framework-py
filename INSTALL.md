@@ -9,7 +9,8 @@ uv sync --extra all --extra dev                         # runtime + dev deps (ru
 uv run playwright install --with-deps chromium
 uv run poe proto-gen                        # generate gRPC stubs into src/aiqa_framework/modules/api/grpc/generated
 cp environments/.env.test.example environments/.env.test
-cp environments/.env.jira.example environments/.env.jira   # optional (failure → Bug)
+cp environments/.env.jira.example environments/.env.jira   # optional (bug drafts → Jira filing)
+cp environments/.env.git.example  environments/.env.git    # optional (ship step: branch + MR)
 ```
 
 ## Make it yours

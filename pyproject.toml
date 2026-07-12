@@ -1,6 +1,6 @@
 [project]
 name = "aiqa-framework"
-version = "0.1.0"
+version = "0.2.0"
 description = "AIQA — AI-Driven QA Framework: modular UI (Playwright) · API (REST/gRPC/GraphQL) · Performance (Locust/JMeter) · Mobile (Appium), with an AI QA agent + MCP servers. Each surface installs and runs in isolation via optional extras."
 readme = "README.md"
 requires-python = ">=3.11"

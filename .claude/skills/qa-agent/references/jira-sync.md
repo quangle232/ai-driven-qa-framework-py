@@ -55,9 +55,11 @@ statuses on whichever target the client chose.
     build URL,
   - the new auto cases (TC ID + title + `specFile`) and the related existing tests
     that were re-run,
-  - any **bug IDs** filed — the framework's `shared/reporting/bug_reporter.py` auto-creates a
-    Jira bug on the final failed attempt for `@jira`-tagged specs; link those bugs
-    here and write them back into the JSON `bugId` + the review table.
+  - any **bug IDs** filed — a final-attempt failure writes an approval-gated DRAFT
+    to `test-output/ai/bug-drafts/` (root conftest gate; `JIRA_AUTO_BUG=yes` opts
+    into direct auto-filing via `shared/reporting/bug_reporter.py`). Bugs filed
+    from approved drafts get linked here and written back into the JSON `bugId`
+    + the review table.
 - Keep it lightweight: do not attach the main Excel here or duplicate every case body.
 
 ## Child item creation fallback

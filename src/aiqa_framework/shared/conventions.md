@@ -5,7 +5,10 @@
 ## What's in shared/
 - `config/` — `env.py` (`test_env` → `.env.<env>`), `settings.py` (pydantic), `tags.py`
   (`TAGS`, `tags()`, `jira()` markers). The single source of markers for every module.
-- `reporting/` — `bug_reporter.py`: failure → Jira bug (called by the root conftest hook).
+- `reporting/` — `bug_draft_writer.py`: failure → approval-gated bug DRAFT (JSON +
+  self-contained HTML in `test-output/ai/bug-drafts/`; the root conftest hook's
+  default) · `bug_reporter.py`: direct Jira filing, used for approved drafts and
+  the `JIRA_AUTO_BUG=yes` opt-in.
 - `memory/` — `store.py`: resolves `docs/ai/<module>/` per-module AI memory + artifacts.
 - `helpers/` — tiny cross-cutting utils (`slugify`, `snake`, `now_iso`).
 

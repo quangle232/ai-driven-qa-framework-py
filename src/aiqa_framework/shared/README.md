@@ -6,7 +6,7 @@ base package (no optional extra needed).
 | Package | Purpose |
 |---------|---------|
 | `config` | env resolution, pydantic settings, `TAGS`/`tags()`/`jira()` markers |
-| `reporting` | failure → Jira bug reporter (root conftest hook) |
+| `reporting` | failure → approval-gated bug drafts (default) + Jira bug filing (`JIRA_AUTO_BUG=yes` / approved drafts) |
 | `memory` | `docs/ai/<module>/` per-module AI memory + artifact paths |
 | `helpers` | small cross-cutting utils |
 

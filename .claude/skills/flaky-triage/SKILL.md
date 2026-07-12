@@ -7,8 +7,10 @@ description: Detect and confirm flaky tests by repeated reruns, quarantine them,
 
 1. **Identify suspects**: passed-on-rerun in the last run (`read-report` flags these) or
    a test the user names.
-2. **Confirm**: rerun in isolation several times and record the pass/fail ratio, e.g.
-   `for i in $(seq 10); do uv run pytest "<nodeid>" -q || true; done` (or `--reruns`).
+2. **Confirm**: rerun in isolation several times and record the pass/fail ratio:
+   `uv run pytest "<nodeid>" --count=10 --json-report-file=test-output/stress-report.json`
+   (pytest-repeat; the redirected report keeps the main run report intact) — or a
+   `for i in $(seq 10)` loop / `--reruns`.
 3. **Classify**: a real defect (→ keep failing / file a bug) vs genuinely flaky
    (nondeterministic — timing, order, or shared data).
 4. **Quarantine** flaky ones: gate them (e.g. a `@flaky`/skip marker) with a reason +

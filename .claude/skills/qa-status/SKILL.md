@@ -12,6 +12,8 @@ Aggregate a concise status across the project:
   by status); call `coverage-gap` for uncovered AC when a story/feature is given.
 - **Known issues + flaky** — the `memory` MCP (`known-issues`, `flaky-history`) /
   `.aiqa-memory/`.
+- **Pending bug drafts** — `test-output/ai/bug-drafts/` (count the `*.json` drafts;
+  `index.html` lists them). Drafts await human approval → `create-bug` files them.
 - **Pending** — approved-but-unpublished or draft cases in `docs/ai/<module>/testcases/`.
 - **Surfaces** — modules that exist + their markers (`framework-context` MCP /
   `uv run aiqa scan`).
